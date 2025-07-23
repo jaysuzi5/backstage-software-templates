@@ -1,0 +1,55 @@
+replicaCount: 1
+image:
+  repository: jaysuzi5/${{values.app_name}}
+  pullPolicy: Always
+  tag: ${{values.app_name}}-${{values.app_env}}-latest
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+serviceAccount:
+  create: false
+  automount: true
+  annotations: {}
+  name: ""
+podAnnotations: {}
+podLabels: {}
+podSecurityContext: {}
+securityContext: {}
+service:
+  type: ClusterIP
+  port: 5001
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations: {}
+  hosts:
+    - host: home.${{values.app_env}}.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+resources: {}
+livenessProbe:
+  httpGet:
+    path: /api/v1/health
+    port: 5001
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  failureThreshold: 3
+readinessProbe:
+  httpGet:
+    path: /api/v1/health
+    port: 5001
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  failureThreshold: 3
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+volumes: []
+volumeMounts: []
+nodeSelector: {}
+tolerations: []
+affinity: {}
