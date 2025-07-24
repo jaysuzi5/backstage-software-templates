@@ -46,6 +46,24 @@ jobs:
           curl -ksSl -o argocd https://argocd-server.argocd/download/argocd-linux-amd64
           chmod +x argocd
           sudo mv ./argocd /usr/local/bin/argocd
+      - name: Argocd add repo and application
+        shell: bash
+        run: |
+          # Connects the argocd repo
+          repo = "https://github.com/jaysuzi5-organization/${{values.app_name}}.git"
+          argocd repo list | grep -q $repo | argocd repo add $repo
+
+          # Creates the argocd app
+          argocd app get ${{values.app_name}} || argocd app create ${{values.app_name}} \
+            --repo $repo \
+            --path charts/${{values.app_name}} \
+            --dest-namespace ${{values.app_env}} \
+            --dest-server https://kubernetes.default.svc \
+            --values values-${{values.app_env}}.yaml \
+            --revision main \
+            --sync-policy manual \
+            --sync-option CreateNamespace=true
+
       - name: Argocd app sync
         shell: bash
         run: |
@@ -54,4 +72,6 @@ jobs:
             --grpc-web \
             --username admin \
             --password ${{ '${{ secrets.ARGOCD_PASSWORD }}' }}
-          argocd app sync ${{values.app_name}}          
+          argocd app sync ${{values.app_name}}
+
+
