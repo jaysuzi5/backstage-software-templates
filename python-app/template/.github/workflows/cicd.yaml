@@ -69,7 +69,8 @@ jobs:
             --revision main \
             --sync-policy manual \
             --sync-option CreateNamespace=true
+            --verbose
 
           # Syncs the argocd app
           argocd app sync ${{values.app_name}}
-          argocd app wait $${{values.app_name}} --timeout 180
+          argocd app wait ${{values.app_name}} --timeout 180
