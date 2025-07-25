@@ -73,5 +73,6 @@ jobs:
             --username admin \
             --password ${{ '${{ secrets.ARGOCD_PASSWORD }}' }}
           argocd app sync ${{values.app_name}}
+          argocd app wait $${{values.app_name}} --timeout 180
 
 
