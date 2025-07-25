@@ -56,20 +56,25 @@ jobs:
             --username admin \
             --password ${{ '${{ secrets.ARGOCD_PASSWORD }}' }}
 
-          # Connects the argocd repo
-          argocd repo list | grep -q 'https://github.com/jaysuzi5-organization/${{values.app_name}}.git' | argocd repo add 'https://github.com/jaysuzi5-organization/${{values.app_name}}.git'
+          # Add repo if not already added
+          if ! argocd repo list | grep -q 'https://github.com/jaysuzi5-organization/${{values.app_name}}'; then
+            argocd repo add 'https://github.com/jaysuzi5-organization/${{values.app_name}}.git'
+          fi
 
-          # Creates the argocd app
-          argocd app create ${{values.app_name}} \
-            --repo https://github.com/jaysuzi5-organization/${{values.app_name}}.git \
-            --path charts/${{values.app_name}} \
-            --dest-namespace ${{values.app_env}} \
-            --dest-server https://kubernetes.default.svc \
-            --values values-${{values.app_env}}.yaml \
-            --revision main \
-            --sync-policy manual \
-            --sync-option CreateNamespace=true
-            --verbose
+          # Create the app only if it doesn't exist
+          if ! argocd app get ${{values.app_name}} >/${{values.app_env}}/null 2>&1; then
+            argocd app create ${{values.app_name}} \
+              --repo https://github.com/jaysuzi5-organization/${{values.app_name}}.git \
+              --path charts/${{values.app_name}} \
+              --dest-namespace ${{values.app_env}} \
+              --dest-server https://kubernetes.default.svc \
+              --values values-${{values.app_env}}.yaml \
+              --revision main \
+              --sync-policy manual \
+              --sync-option CreateNamespace=true
+          else
+            echo "App ${{values.app_name}} already exists."
+          fi
 
           # Syncs the argocd app
           argocd app sync ${{values.app_name}}
