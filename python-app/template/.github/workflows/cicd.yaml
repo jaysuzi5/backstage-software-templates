@@ -60,7 +60,7 @@ jobs:
           argocd repo list | grep -q 'https://github.com/jaysuzi5-organization/${{values.app_name}}.git' | argocd repo add 'https://github.com/jaysuzi5-organization/${{values.app_name}}.git'
 
           # Creates the argocd app
-          argocd app get ${{values.app_name}} || argocd app create ${{values.app_name}} \
+          argocd app create ${{values.app_name}} \
             --repo https://github.com/jaysuzi5-organization/${{values.app_name}}.git \
             --path charts/${{values.app_name}} \
             --dest-namespace ${{values.app_env}} \
@@ -73,5 +73,3 @@ jobs:
           # Syncs the argocd app
           argocd app sync ${{values.app_name}}
           argocd app wait $${{values.app_name}} --timeout 180
-
-
