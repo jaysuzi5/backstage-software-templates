@@ -50,16 +50,14 @@ jobs:
         shell: bash
         run: |
           # Connects the argocd repo
-          repository="https://github.com/jaysuzi5-organization/${{values.app_name}}.git"
-          argocd repo list | grep -q $repository | argocd repo add $repository
+          argocd repo list | grep -q 'https://github.com/jaysuzi5-organization/${{values.app_name}}.git' | argocd repo add 'https://github.com/jaysuzi5-organization/${{values.app_name}}.git'
 
       - name: Argocd add repo and application
         shell: bash
         run: |
           # Creates the argocd app
-          repository="https://github.com/jaysuzi5-organization/${{values.app_name}}.git"
           argocd app get ${{values.app_name}} || argocd app create ${{values.app_name}} \
-            --repo $repository \
+            --repo https://github.com/jaysuzi5-organization/${{values.app_name}}.git \
             --path charts/${{values.app_name}} \
             --dest-namespace ${{values.app_env}} \
             --dest-server https://kubernetes.default.svc \
