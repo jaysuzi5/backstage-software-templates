@@ -46,11 +46,6 @@ jobs:
           curl -ksSl -o argocd https://argocd-server.argocd/download/argocd-linux-amd64
           chmod +x argocd
           sudo mv ./argocd /usr/local/bin/argocd
-      - name: Argocd add repo and application
-        shell: bash
-        run: |
-          # Connects the argocd repo
-          argocd repo list | grep -q 'https://github.com/jaysuzi5-organization/${{values.app_name}}.git' | argocd repo add 'https://github.com/jaysuzi5-organization/${{values.app_name}}.git'
       - name: Argocd app sync
         shell: bash
         run: |
