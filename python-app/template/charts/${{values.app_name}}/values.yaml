@@ -31,14 +31,14 @@ ingress:
 resources: {}
 livenessProbe:
   httpGet:
-    path: /api/v1/health
+    path: /api/${{values.app_name}}/v1/health
     port: 5001
   initialDelaySeconds: 5
   periodSeconds: 10
   failureThreshold: 3
 readinessProbe:
   httpGet:
-    path: /api/v1/health
+    path: /api/${{values.app_name}}/v1/health
     port: 5001
   initialDelaySeconds: 5
   periodSeconds: 10
