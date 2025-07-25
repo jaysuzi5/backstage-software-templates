@@ -51,10 +51,19 @@ jobs:
         run: |
           # Connects the argocd repo
           argocd repo list | grep -q 'https://github.com/jaysuzi5-organization/${{values.app_name}}.git' | argocd repo add 'https://github.com/jaysuzi5-organization/${{values.app_name}}.git'
-
-      - name: Argocd add repo and application
+      - name: Argocd app sync
         shell: bash
         run: |
+          # Login to argocd
+          argocd login argocd-server.argocd \
+            --insecure \
+            --grpc-web \
+            --username admin \
+            --password ${{ '${{ secrets.ARGOCD_PASSWORD }}' }}
+
+          # Connects the argocd repo
+          argocd repo list | grep -q 'https://github.com/jaysuzi5-organization/${{values.app_name}}.git' | argocd repo add 'https://github.com/jaysuzi5-organization/${{values.app_name}}.git'
+
           # Creates the argocd app
           argocd app get ${{values.app_name}} || argocd app create ${{values.app_name}} \
             --repo https://github.com/jaysuzi5-organization/${{values.app_name}}.git \
@@ -66,14 +75,7 @@ jobs:
             --sync-policy manual \
             --sync-option CreateNamespace=true
 
-      - name: Argocd app sync
-        shell: bash
-        run: |
-          argocd login argocd-server.argocd \
-            --insecure \
-            --grpc-web \
-            --username admin \
-            --password ${{ '${{ secrets.ARGOCD_PASSWORD }}' }}
+          # Syncs the argocd app
           argocd app sync ${{values.app_name}}
           argocd app wait $${{values.app_name}} --timeout 180
 
