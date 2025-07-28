@@ -6,4 +6,4 @@ RUN pip install -r /tmp/requirements.txt
 
 COPY ./src /src
 
-CMD ["python", "/src/app.py"]
+CMD ["opentelemetry-instrument", "--logs_exporter", "otlp", "--traces_exporter", "otlp", "python", "/src/app.py"]
