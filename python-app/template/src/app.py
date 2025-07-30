@@ -2,10 +2,19 @@ from flask import Flask, jsonify
 import datetime
 import logging
 import socket
+import json
 
 app = Flask(__name__)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+handler = logging.StreamHandler()
+handler.setFormatter(logging.Formatter(json.dumps({
+    "time": "%(asctime)s",
+    "level": "%(levelname)s",
+    "message": "%(message)s",
+    "service": "${{values.app_name}}"
+})))
+logger.addHandler(handler)
 
 @app.route('/api/${{values.app_name}}/v1/info')
 def info():
