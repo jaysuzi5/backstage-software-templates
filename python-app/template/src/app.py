@@ -7,32 +7,36 @@ from opentelemetry._logs import get_logger_provider
 
 app = Flask(__name__)
 
-class JsonFormatter(logging.Formatter):
+class SplunkReadyFormatter(logging.Formatter):
     def format(self, record):
+        # Structure that Splunk HEC prefers
         return json.dumps({
-            "time": self.formatTime(record),
-            "level": record.levelname,
-            "message": record.getMessage(),
-            "logger": record.name,
-            "stack_trace": self.formatException(record.exc_info) if record.exc_info else None,
-            # Include OTEL context if available
-            "trace_id": getattr(record, "trace_id", None),
-            "span_id": getattr(record, "span_id", None)
+            "time": int(record.created * 1000),  # Epoch milliseconds
+            "host": socket.gethostname(),
+            "source": "flask-app",
+            "sourcetype": "_json",
+            "event": {
+                "message": record.getMessage(),
+                "level": record.levelname,
+                "logger": record.name,
+                "stack_trace": self.formatException(record.exc_info) if record.exc_info else None,
+                "trace_id": getattr(record, "trace_id", None),
+                "span_id": getattr(record, "span_id", None)
+            }
         })
 
-# Configure root logger
+# Configure logging
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-# Remove existing handlers (avoid duplicate logs)
+# Remove existing handlers
 for handler in logger.handlers[:]:
     logger.removeHandler(handler)
 
-# Add JSON formatter to console
-json_handler = logging.StreamHandler()
-json_handler.setFormatter(JsonFormatter())
-logger.addHandler(json_handler)
-
+# Add console handler (pretty JSON)
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(JsonFormatter())  # Your original formatter
+logger.addHandler(console_handler)
 
 
 @app.route('/api/${{values.app_name}}/v1/info')
