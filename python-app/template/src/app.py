@@ -5,11 +5,21 @@ import socket
 import json
 from opentelemetry._logs import get_logger_provider
 
-app = Flask(__name__)
-
-class SplunkReadyFormatter(logging.Formatter):
+# Define formatters first
+class JsonFormatter(logging.Formatter):
     def format(self, record):
-        # Structure that Splunk HEC prefers
+        return json.dumps({
+            "time": self.formatTime(record),
+            "level": record.levelname,
+            "message": record.getMessage(),
+            "logger": record.name,
+            "stack_trace": self.formatException(record.exc_info) if record.exc_info else None,
+            "trace_id": getattr(record, "trace_id", None),
+            "span_id": getattr(record, "span_id", None)
+        })
+
+class SplunkHecFormatter(logging.Formatter):
+    def format(self, record):
         return json.dumps({
             "time": int(record.created * 1000),  # Epoch milliseconds
             "host": socket.gethostname(),
@@ -25,23 +35,31 @@ class SplunkReadyFormatter(logging.Formatter):
             }
         })
 
-# Configure logging
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+# Configure logging before creating the Flask app
+def configure_logging():
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+    
+    # Clear existing handlers
+    for handler in logger.handlers[:]:
+        logger.removeHandler(handler)
+    
+    # Add console handler with JSON formatting
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(JsonFormatter())
+    logger.addHandler(console_handler)
 
-# Remove existing handlers
-for handler in logger.handlers[:]:
-    logger.removeHandler(handler)
+# Configure logging first
+configure_logging()
 
-# Add console handler (pretty JSON)
-console_handler = logging.StreamHandler()
-console_handler.setFormatter(JsonFormatter())  # Your original formatter
-logger.addHandler(console_handler)
+
+# Now start the app
+app = Flask(__name__)
 
 
 @app.route('/api/${{values.app_name}}/v1/info')
 def info():
-    logger.info('info called')
+    app.logger.info('info called from ${{values.app_name}}')
     return jsonify({
         'time': datetime.datetime.now().strftime("%I:%M:%S %p on %Y-%m-%d"),
         'hostname': socket.gethostname(),
@@ -54,7 +72,7 @@ def info():
 
 @app.route('/api/${{values.app_name}}/v1/health')
 def health():
-    logger.info('health called')
+    app.logger.info('health called from ${{values.app_name}}')
     return jsonify({'status': 'UP'}), 200
 
 
