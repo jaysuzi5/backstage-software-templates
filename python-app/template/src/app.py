@@ -38,7 +38,7 @@ def info():
         time=current_time,
         endpoint='info',
         hostname=socket.gethostname(),
-        env=${{values.app_env}}
+        environment='${{values.app_env}}'
     ))
     return jsonify({
         'time': current_time,
@@ -56,7 +56,7 @@ def health():
         time=current_time,
         endpoint='health',
         status='UP',
-        env=${{values.app_env}}
+        environment='${{values.app_env}}'
     ))    
     return jsonify({'status': 'UP'}), 200
 
