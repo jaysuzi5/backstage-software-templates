@@ -47,7 +47,7 @@ app = Flask(__name__)
 @app.route('/api/${{values.app_name}}/v1/info')
 def info():
     with tracer.start_as_current_span("info") as info_span:
-        transaction_id = uuid.uuid4()
+        transaction_id = str(uuid.uuid4())
         current_time = datetime.datetime.now().strftime("%I:%M:%S %p on %Y-%m-%d")
         info_span.set_attribute("transaction_id", transaction_id)
         call_counter.add(1, {"endpoint": "info"})
@@ -71,7 +71,7 @@ def info():
 @app.route('/api/${{values.app_name}}/v1/health')
 def health():
     with tracer.start_as_current_span("health") as health_span:
-        transaction_id = uuid.uuid4()
+        transaction_id = str(uuid.uuid4())
         current_time = datetime.datetime.now().strftime("%I:%M:%S %p on %Y-%m-%d")
         health_span.set_attribute("transaction_id", transaction_id)
         call_counter.add(1, {"endpoint": "health"})
