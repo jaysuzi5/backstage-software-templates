@@ -32,11 +32,11 @@ class StructuredMessage:
         })
 
 
-tracer = trace.get_tracer("{{values.app_name}}.tracer")
-meter = metrics.get_meter("{{values.app_name}}.meter")
+tracer = trace.get_tracer("${{values.app_name}}.tracer")
+meter = metrics.get_meter("${{values.app_name}}.meter")
 
 call_counter = meter.create_counter(
-    "{{values.app_name}}",
+    "${{values.app_name}}",
     description="The number of endpoint calls",
 )
 
