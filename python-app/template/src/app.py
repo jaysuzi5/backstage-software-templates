@@ -3,8 +3,12 @@ import datetime
 import logging
 import socket
 import json
+import uuid
 from opentelemetry._logs import get_logger_provider
 from opentelemetry.sdk._logs import LoggingHandler
+from opentelemetry import trace
+from opentelemetry import metrics
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -28,37 +32,58 @@ class StructuredMessage:
         })
 
 
+tracer = trace.get_tracer("{{values.app_name}}.tracer")
+meter = metrics.get_meter("{{values.app_name}}.meter")
+
+call_counter = meter.create_counter(
+    "{{values.app_name}}",
+    description="The number of endpoint calls",
+)
+
+
+
 app = Flask(__name__)
 
 @app.route('/api/${{values.app_name}}/v1/info')
 def info():
-    current_time = datetime.datetime.now().strftime("%I:%M:%S %p on %Y-%m-%d")
-    logger.info(StructuredMessage(
-        'info called from ${{values.app_name}}',
-        time=current_time,
-        endpoint='info',
-        hostname=socket.gethostname(),
-        environment='${{values.app_env}}'
-    ))
-    return jsonify({
-        'time': current_time,
-        'hostname': socket.gethostname(),
-        'env': '${{values.app_env}}',
-        'app_name': '${{values.app_name}}'
-    })
+    with tracer.start_as_current_span("info") as info_span:
+        transaction_id = uuid.uuid4()
+        current_time = datetime.datetime.now().strftime("%I:%M:%S %p on %Y-%m-%d")
+        info_span.set_attribute("transaction_id", transaction_id)
+        call_counter.add(1, {"endpoint": "info"})
+
+        logger.info(StructuredMessage(
+            'info called from ${{values.app_name}}',
+            transactionId=transaction_id,            
+            time=current_time,
+            endpoint='info',
+            hostname=socket.gethostname(),
+            environment='${{values.app_env}}'
+        ))
+        return jsonify({
+            'time': current_time,
+            'hostname': socket.gethostname(),
+            'env': '${{values.app_env}}',
+            'app_name': '${{values.app_name}}'
+        })
 
 
 @app.route('/api/${{values.app_name}}/v1/health')
 def health():
-    current_time = datetime.datetime.now().strftime("%I:%M:%S %p on %Y-%m-%d")
-    logger.info(StructuredMessage(
-        'info called from ${{values.app_name}}',
-        time=current_time,
-        endpoint='health',
-        status='UP',
-        environment='${{values.app_env}}'
-    ))    
-    return jsonify({'status': 'UP'}), 200
+    with tracer.start_as_current_span("health") as health_span:
+        transaction_id = uuid.uuid4()
+        current_time = datetime.datetime.now().strftime("%I:%M:%S %p on %Y-%m-%d")
+        health_span.set_attribute("transaction_id", transaction_id)
+        call_counter.add(1, {"endpoint": "health"})
+        logger.info(StructuredMessage(
+            'info called from ${{values.app_name}}',
+            transactionId=transaction_id,
+            time=current_time,
+            endpoint='health',
+            status='UP',
+            environment='${{values.app_env}}'
+        ))    
+        return jsonify({'status': 'UP'}), 200
 
 
 if __name__ == '__main__':
