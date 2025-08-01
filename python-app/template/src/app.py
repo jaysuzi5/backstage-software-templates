@@ -8,6 +8,30 @@ from opentelemetry._logs import get_logger_provider
 from opentelemetry.sdk._logs import LoggingHandler
 from opentelemetry import trace
 from opentelemetry import metrics
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics.export import (PeriodicExportingMetricReader,)
+from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
+from opentelemetry.instrumentation.flask import FlaskInstrumentor
+
+# Setup Flask app
+app = Flask(__name__)
+
+# Setup OTEL MeterProvider and exporter
+exporter = OTLPMetricExporter(endpoint="http://localhost:4317", insecure=True)
+reader = PeriodicExportingMetricReader(exporter)
+provider = MeterProvider(metric_readers=[reader])
+metrics.set_meter_provider(provider)
+
+# Create meter and counter
+meter = metrics.get_meter(__name__)
+endpoint_counter = meter.create_counter(
+    name="endpoint_requests_total",
+    description="Counts how many times /hello endpoint is called",
+)
+
+
+
+
 
 
 logging.basicConfig(level=logging.INFO)
@@ -33,12 +57,12 @@ class StructuredMessage:
 
 
 tracer = trace.get_tracer("${{values.app_name}}.tracer")
-meter = metrics.get_meter("${{values.app_name}}.meter")
+# meter = metrics.get_meter("${{values.app_name}}.meter")
 
-endpoint_counter = meter.create_counter(
-    name="endpoint_requests_total",
-    description="Counts how many times endpoints are called",
-)
+# endpoint_counter = meter.create_counter(
+#     name="endpoint_requests_total",
+#     description="Counts how many times endpoints are called",
+# )
 
 
 
