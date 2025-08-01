@@ -35,11 +35,11 @@ class StructuredMessage:
 tracer = trace.get_tracer("${{values.app_name}}.tracer")
 meter = metrics.get_meter("${{values.app_name}}.meter")
 
-call_counter = meter.create_counter(
-    "${{values.app_name}}_calls_total",
-    description="The number of endpoint calls",
-    unit="1"
+endpoint_counter = meter.create_counter(
+    name="endpoint_requests_total",
+    description="Counts how many times endpoints are called",
 )
+
 
 
 
@@ -51,7 +51,7 @@ def info():
         transaction_id = str(uuid.uuid4())
         current_time = datetime.datetime.now().strftime("%I:%M:%S %p on %Y-%m-%d")
         info_span.set_attribute("transaction_id", transaction_id)
-        call_counter.add(1, {"endpoint": "info"})
+        endpoint_counter.add(1, {"endpoint": "info"})
 
         logger.info(StructuredMessage(
             'info called from ${{values.app_name}}',
@@ -75,7 +75,7 @@ def health():
         transaction_id = str(uuid.uuid4())
         current_time = datetime.datetime.now().strftime("%I:%M:%S %p on %Y-%m-%d")
         health_span.set_attribute("transaction_id", transaction_id)
-        call_counter.add(1, {"endpoint": "health"})
+        endpoint_counter.add(1, {"endpoint": "health"})
         logger.info(StructuredMessage(
             'info called from ${{values.app_name}}',
             transactionId=transaction_id,
