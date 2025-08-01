@@ -9,5 +9,4 @@ opentelemetry-distro
 opentelemetry-exporter-otlp
 opentelemetry-exporter-otlp
 opentelemetry-instrumentation-flask
-prometheus_flask_exporter
 gunicorn

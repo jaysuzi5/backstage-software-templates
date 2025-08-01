@@ -1,28 +1,33 @@
 from flask import Flask, jsonify, request, g
 import datetime
+import time
 import logging
 import socket
 import uuid
 from opentelemetry.sdk._logs import LoggingHandler
 from opentelemetry.instrumentation.flask import FlaskInstrumentor
-from prometheus_flask_exporter import PrometheusMetrics
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
+from opentelemetry import metrics
 
+# Setup Metrics
+otlp_exporter = OTLPMetricExporter(endpoint="http://otel-collector.monitoring.svc.cluster.local:4317", insecure=True)
+reader = PeriodicExportingMetricReader(otlp_exporter)
+metrics.set_meter_provider(MeterProvider(metric_readers=[reader]))
 
 # Setup Logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-if not any(isinstance(h, LoggingHandler) for h in logger.handlers):
-    logger.addHandler(LoggingHandler())
+logger = logging.getLogger()
+logger.handlers.clear()
+logger.propagate = False
+logger.setLevel(logging.INFO)
+logger.addHandler(LoggingHandler())
 
 # Setup Flask app
 app = Flask(__name__)
 
 # Instrument Flask app with OTEL Trace and Metrics
 FlaskInstrumentor().instrument_app(app)
-metrics = PrometheusMetrics(app)
-
-# Setup for Pre- and Post-Request Logging
-import time
 
 # Middleware
 @app.before_request
@@ -61,7 +66,8 @@ def info():
     return jsonify({
         'hostname': socket.gethostname(),
         'env': '${{values.app_env}}',
-        'app_name': '${{values.app_name}}'
+        'app_name': '${{values.app_name}}',
+        'time': datetime.datetime.now().strftime("%I:%M:%S %p on %Y-%m-%d")
     })
 
 
