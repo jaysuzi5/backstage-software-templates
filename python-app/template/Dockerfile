@@ -2,12 +2,16 @@ FROM python:3.12.0-alpine
 
 COPY requirements.txt /tmp
 
-# Add necessary build tools
+# Install build dependencies separately
 RUN apk add --no-cache --virtual .build-deps \
-        gcc musl-dev libffi-dev python3-dev cargo \
-    && pip install --upgrade pip \
-    && pip install -r /tmp/requirements.txt \
-    && apk del .build-deps  # optionally clean up
+        gcc musl-dev libffi-dev python3-dev cargo
+
+# Upgrade pip and install Python packages
+RUN pip install --upgrade pip
+RUN pip install -r /tmp/requirements.txt
+
+# Clean up build dependencies
+RUN apk del .build-deps
 
 COPY ./src /src
 
