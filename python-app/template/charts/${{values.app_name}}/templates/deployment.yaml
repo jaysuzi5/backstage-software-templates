@@ -45,9 +45,18 @@ spec:
               containerPort: {{ .Values.service.port }}
               protocol: TCP
           env:
-            {{- with .Values.otelEnv }}
+            {{- with .Values.environmentVariables }}
             {{- toYaml . | nindent 12 }}
-            {{- end }}              
+            {{- end }}
+            {{- with .Values.secretEnvironmentVariables }}
+            {{- range . }}
+            - name: {{ .name }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .secretKeyRef.name }}
+                  key: {{ .secretKeyRef.key }}
+            {{- end }}
+            {{- end }}
           {{- with .Values.livenessProbe }}
           livenessProbe:
             {{- toYaml . | nindent 12 }}

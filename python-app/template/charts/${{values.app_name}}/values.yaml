@@ -55,10 +55,27 @@ volumeMounts: []
 nodeSelector: {}
 tolerations: []
 affinity: {}
-otelEnv:
+environmentVariables:
   - name: OTEL_EXPORTER_OTLP_ENDPOINT
     value: "http://otel-collector-collector.monitoring.svc.cluster.local:4317"
   - name: OTEL_SERVICE_NAME
     value: "${{values.app_name}}"
   - name: OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED
-    value: "true"  
+    value: "true"
+  - name: POSTGRES_HOST
+    value: "192.168.86.200"
+  - name: POSTGRES_PORT
+    value: "30000"
+  - name: POSTGRES_DB
+    value: "homelab"        
+# Secrets must be preregistered in either dev-secrets or prod-secrets
+# See homelab setup for the files    
+secretEnvironmentVariables:
+  - name: POSTGRES_PASSWORD
+    secretKeyRef:
+      name: ${{values.app_env}}-secrets
+      key: POSTGRES_PASSWORD_HOMELAB
+  - name: POSTGRES_USER
+    secretKeyRef:
+      name: ${{values.app_env}}-secrets
+      key: POSTGRES_USER_HOMELAB      
