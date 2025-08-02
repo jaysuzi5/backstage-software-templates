@@ -4,6 +4,7 @@ import os
 import requests
 import socket
 import time
+import traceback
 import uuid
 from flask import Flask, jsonify, request, g
 from flask_sqlalchemy import SQLAlchemy
@@ -66,6 +67,26 @@ def finish_response(response):
         "hostname": socket.gethostname()
     })
     return response
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    stack_trace = traceback.format_exc()
+    logger.error({
+        "event": "Error",
+        "transaction_id": getattr(g, 'transaction_id', None),
+        'exception': str(e),
+        "stack_trace": stack_trace,
+        "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "hostname": socket.gethostname()
+    })
+
+    logger.error(f"Exception occurred: {str(e)}\nTraceback:\n{trace}")
+
+    # Optional: Return JSON response to client
+    return {
+        "error": str(e),
+        "trace": stack_trace.splitlines()[-1]
+    }, 500
 
 
 # Define model used with sample()
