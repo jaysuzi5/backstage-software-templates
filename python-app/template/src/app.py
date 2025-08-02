@@ -10,9 +10,16 @@ from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
 from opentelemetry import metrics
-
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
+from opentelemetry import metrics
 
 # Setup Metrics
+exporter = OTLPMetricExporter(endpoint="http://otel-collector.monitoring.svc.cluster.local:4317", insecure=True)
+reader = PeriodicExportingMetricReader(exporter)
+provider = MeterProvider(metric_readers=[reader])
+metrics.set_meter_provider(provider)
 meter = metrics.get_meter("${{values.app_name}}")
 request_counter = meter.create_counter(
     name="http_server_requests_total",
