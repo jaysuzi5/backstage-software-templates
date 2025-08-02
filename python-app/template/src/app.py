@@ -6,26 +6,7 @@ import socket
 import uuid
 from opentelemetry.sdk._logs import LoggingHandler
 from opentelemetry.instrumentation.flask import FlaskInstrumentor
-from opentelemetry.sdk.metrics import MeterProvider
-from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
-from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
-from opentelemetry import metrics
-from opentelemetry.sdk.metrics import MeterProvider
-from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
-from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
-from opentelemetry import metrics
 
-# Setup Metrics
-exporter = OTLPMetricExporter(endpoint="http://otel-collector.monitoring.svc.cluster.local:4317", insecure=True)
-reader = PeriodicExportingMetricReader(exporter)
-provider = MeterProvider(metric_readers=[reader])
-metrics.set_meter_provider(provider)
-meter = metrics.get_meter("${{values.app_name}}")
-request_counter = meter.create_counter(
-    name="http_server_requests_total",
-    unit="1",
-    description="Total number of HTTP requests received"
-)
 
 # Setup Logging
 logger = logging.getLogger()
@@ -58,15 +39,6 @@ def start_request():
 @app.after_request
 def finish_response(response):
     duration = time.time() - getattr(g, 'start_time', time.time())
-    request_counter.add(
-        1,
-        {
-            "method": request.method,
-            "path": request.path,
-            "status_code": response.status_code,
-            "hostname": socket.gethostname()
-        }
-    )
     logger.info({
         "event": "Response",
         "transaction_id": getattr(g, 'transaction_id', None),
