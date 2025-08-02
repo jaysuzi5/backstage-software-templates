@@ -80,8 +80,6 @@ def handle_exception(e):
         "hostname": socket.gethostname()
     })
 
-    logger.error(f"Exception occurred: {str(e)}\nTraceback:\n{trace}")
-
     # Optional: Return JSON response to client
     return {
         "error": str(e),
