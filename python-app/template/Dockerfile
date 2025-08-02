@@ -2,7 +2,12 @@ FROM python:3.12.0-alpine
 
 COPY requirements.txt /tmp
 
-RUN pip install -r /tmp/requirements.txt
+# Add necessary build tools
+RUN apk add --no-cache --virtual .build-deps \
+        gcc musl-dev libffi-dev python3-dev cargo \
+    && pip install --upgrade pip \
+    && pip install -r /tmp/requirements.txt \
+    && apk del .build-deps  # optionally clean up
 
 COPY ./src /src
 
