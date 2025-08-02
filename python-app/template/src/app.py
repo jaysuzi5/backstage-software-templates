@@ -47,6 +47,10 @@ def start_request():
     g.path = request.path
     g.endpoint = request.path.rsplit('/', 1)[-1] 
 
+    app_name = request.view_args.get('app_name') if request.view_args else None
+    if not app_name:
+        parts = request.path.strip('/').split('/')
+        app_name = parts[1] if len(parts) >= 4 and parts[0] == 'api' and parts[2] == 'v1' else None
 
     logger.info({
         "level": "INFO",
@@ -99,9 +103,19 @@ def handle_exception(e):
 
 
 # Define model used with sample()
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(80))
+class WeatherCurrent(db.Model):
+    __tablename__ = 'weather_current'
+
+    collection_time = db.Column(db.DateTime(timezone=True), primary_key=True)
+    temperature = db.Column(db.Integer)
+    temperature_min = db.Column(db.Integer)
+    temperature_max = db.Column(db.Integer)
+    humidity = db.Column(db.Integer)
+    description = db.Column(db.String(200))
+    feels_like = db.Column(db.Integer)
+    wind_speed = db.Column(db.Numeric)
+    wind_direction = db.Column(db.Integer)
+
 
 
 # Define endpoints
@@ -111,10 +125,25 @@ def sample():
     response = requests.get('https://api.chucknorris.io/jokes/random')
 
     # Database query (instrumented by opentelemetry-instrumentation-sqlalchemy)
-    users = db.session.execute(db.select(User)).scalars().all()
+    # Query: Get last 10 entries ordered by collection_time desc
+    latest_weather = (
+        WeatherCurrent.query
+        .with_entities(WeatherCurrent.collection_time, WeatherCurrent.temperature)
+        .order_by(WeatherCurrent.collection_time.desc())
+        .limit(10)
+        .all()
+    )
     
-    return {"api_data": response.text, "users": [user.name for user in users]}
-
+    return {
+        "api_data": response.text,
+        "weather": [
+            {
+                "collection_time": weather.collection_time.isoformat(),
+                "temperature": weather.temperature
+            }
+            for weather in latest_weather
+        ]
+    }
 
 @app.route('/api/${{values.app_name}}/v1/info')
 def info():
