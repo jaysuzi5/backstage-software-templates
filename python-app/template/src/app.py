@@ -43,28 +43,36 @@ FlaskInstrumentor().instrument_app(app)
 def start_request():
     g.transaction_id = str(uuid.uuid4())  # Store in Flask's context (thread-safe)
     g.start_time = time.time()
+    g.method = request.method
+    g.path = request.path
+    g.endpoint = request.path.rsplit('/', 1)[-1] 
+
+
     logger.info({
+        "level": "INFO",
         "event": "Request",
-        "transaction_id": g.transaction_id,
         "method": request.method,
         "path": request.path,
+        "endpoint": g.endpoint,
         "remote_addr": request.remote_addr,
         "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-        "hostname": socket.gethostname()
+        "hostname": socket.gethostname(),
+        "transaction_id": g.transaction_id
     })
 
 @app.after_request
 def finish_response(response):
     duration = time.time() - getattr(g, 'start_time', time.time())
     logger.info({
+        "level": "INFO",
         "event": "Response",
-        "transaction_id": getattr(g, 'transaction_id', None),
-        "method": request.method,
-        "path": request.path,
-        "status": response.status_code,
-        "duration_seconds": round(duration, 4),
+        "method": getattr(g, 'method', None),
+        "path": getattr(g, 'path', None),
+        "endpoint": getattr(g, 'endpoint', None),
         "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-        "hostname": socket.gethostname()
+        "duration_seconds": round(duration, 4),
+        "status": response.status_code,
+        "transaction_id": getattr(g, 'transaction_id', None)
     })
     return response
 
@@ -72,18 +80,21 @@ def finish_response(response):
 def handle_exception(e):
     stack_trace = traceback.format_exc()
     logger.error({
-        "event": "Error",
-        "transaction_id": getattr(g, 'transaction_id', None),
+        "level": "ERROR",
+        "event": "Unhandled Exception",
+        "method": getattr(g, 'method', None),
+        "path": getattr(g, 'path', None),
+        "endpoint": getattr(g, 'endpoint', None),
+        "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         'exception': str(e),
         "stack_trace": stack_trace,
-        "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-        "hostname": socket.gethostname()
+        "transaction_id": getattr(g, 'transaction_id', None)
     })
 
     # Optional: Return JSON response to client
     return {
-        "error": str(e),
-        "trace": stack_trace.splitlines()[-1]
+        "error": "Unhandled Exception",
+        "transaction_id": getattr(g, 'transaction_id', None)
     }, 500
 
 
