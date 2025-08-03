@@ -1,8 +1,8 @@
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
-  name: python-template
-  title: Python flask template
+  name: python-fastapi-template
+  title: Python fastAPI template
   description: Provisions a minimalistic flask application
 spec:
   owner: development
