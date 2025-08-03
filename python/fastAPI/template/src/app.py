@@ -4,7 +4,6 @@ import datetime
 import requests
 import socket
 from sqlalchemy.orm import Session
-from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 
 from db import SessionLocal, engine
 from models import Base, WeatherCurrent
