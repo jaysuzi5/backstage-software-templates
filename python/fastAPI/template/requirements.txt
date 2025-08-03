@@ -7,6 +7,5 @@ psycopg2-binary==2.9.9
 # OpenTelemetry
 opentelemetry-distro
 opentelemetry-exporter-otlp
-opentelemetry-instrumentation-fastapi
 opentelemetry-instrumentation-requests
 opentelemetry-instrumentation-sqlalchemy

@@ -15,7 +15,7 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 app.add_middleware(LoggingMiddleware)
-FastAPIInstrumentor.instrument_app(app)
+
 
 # Dependency to get DB session
 def get_db():
