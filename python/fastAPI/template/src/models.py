@@ -1,15 +1,10 @@
-from sqlalchemy import Column, DateTime, Integer, Numeric, String
+from sqlalchemy import Column, DateTime, Integer, String
 from db import Base
+from datetime import datetime
 
-class WeatherCurrent(Base):
-    __tablename__ = 'weather_current'
+class ChuckJoke(Base):
+    __tablename__ = 'chuck_jokes'
 
-    collection_time = Column(DateTime(timezone=True), primary_key=True)
-    temperature = Column(Integer)
-    temperature_min = Column(Integer)
-    temperature_max = Column(Integer)
-    humidity = Column(Integer)
-    description = Column(String(200))
-    feels_like = Column(Integer)
-    wind_speed = Column(Numeric)
-    wind_direction = Column(Integer)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    joke = Column(String, unique=True, nullable=False)
+    create_date = Column(DateTime, default=datetime.utcnow)

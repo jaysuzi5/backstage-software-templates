@@ -10,3 +10,10 @@ opentelemetry-exporter-otlp
 opentelemetry-instrumentation-fastapi
 opentelemetry-instrumentation-requests
 opentelemetry-instrumentation-sqlalchemy
+
+# Testing
+asynctest==0.13.0
+dotenv==0.9.9
+pytest==8.4.1
+pytest-mock==3.14.1
+pytest-asyncio==1.1.0

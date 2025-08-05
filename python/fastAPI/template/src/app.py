@@ -1,58 +1,53 @@
-from fastapi import FastAPI, Depends
-import datetime
-import requests
-import socket
-from sqlalchemy.orm import Session
+"""
+Main application entrypoint for the FastAPI service.
+
+This application serves as a backend API that includes health checks, application metadata,
+and sample data retrieval endpoints. It is designed with extensibility in mind, allowing
+future feature additions and endpoint expansion.
+
+Features:
+- FastAPI for API routing and OpenAPI documentation.
+- SQLAlchemy for database integration.
+- Custom middleware for logging requests and responses.
+- OpenTelemetry for distributed tracing and observability.
+- Modular routing structure for maintainability.
+
+Modules:
+- `health`: Liveness and readiness probes.
+- `info`: Application metadata (version, uptime, etc.).
+- `sample`: Dynamic or static sample data retrieval (to be extended).
+
+Usage:
+Start the application using an ASGI server such as Uvicorn:
+    uvicorn app:app --reload
+
+Environment variables and database configuration are managed externally via `.env` files.
+"""
+
+from fastapi import FastAPI
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-
-from db import SessionLocal, engine
-from models import Base, WeatherCurrent
 from middleware import LoggingMiddleware
+from db import engine
+from models import Base
+from api import health, info, sample  # Import routers
 
+# Initialize the FastAPI app instance
+app = FastAPI(
+    title="Chuck Norris Joke Service",
+    description="A microservice to provide Chuck Norris jokes and system health/info endpoints.",
+    version="1.0.0"
+)
 
-app = FastAPI()
+# Register custom request/response logging middleware
 app.add_middleware(LoggingMiddleware)
+
+# Enable OpenTelemetry tracing for the app
 FastAPIInstrumentor.instrument_app(app)
 
-# Initialize DB models as dependency to get DB session
+# Automatically create all database tables defined in models
 Base.metadata.create_all(bind=engine)
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
-@app.get("/api/${{values.app_name}}/v1/sample")
-def sample(db: Session = Depends(get_db)):
-    response = requests.get('https://api.chucknorris.io/jokes/random')
-
-    latest_weather = (
-        db.query(WeatherCurrent.collection_time, WeatherCurrent.temperature)
-        .order_by(WeatherCurrent.collection_time.desc())
-        .limit(10)
-        .all()
-    )
-
-    return {
-        "api_data": response.text,
-        "weather": [
-            {
-                "collection_time": w.collection_time.isoformat(),
-                "temperature": w.temperature
-            } for w in latest_weather
-        ]
-    }
-
-@app.get("/api/${{values.app_name}}/v1/info")
-def info():
-    return {
-        'hostname': socket.gethostname(),
-        'env': '${{values.app_env}}',
-        'app_name': '${{values.app_name}}',
-        'time': datetime.datetime.now().strftime("%I:%M:%S %p on %Y-%m-%d")
-    }
-
-@app.get("/api/${{values.app_name}}/v1/health")
-def health():
-    return {"status": "UP"}
+# Register API route modules
+app.include_router(health.router, tags=["Health"])
+app.include_router(info.router, tags=["Info"])
+app.include_router(sample.router, tags=["Sample"])
