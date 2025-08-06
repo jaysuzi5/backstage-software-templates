@@ -30,7 +30,7 @@ jobs:
         run: |
           export PYTHONPATH=./src
           pytest tests/unit \
-            --cov=my_package \
+            --cov=app \
             --cov-fail-under=70 \
             --junitxml=results.xml
       - name: Upload reports

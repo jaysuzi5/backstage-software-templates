@@ -9,24 +9,20 @@ engine = None
 
 def init_db():
     global SessionLocal, engine
-    POSTGRES_USER = os.getenv("POSTGRES_USER", "postgres")
-    POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "password")
-    POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
-    POSTGRES_PORT = os.getenv("POSTGRES_PORT", "5432")
-    POSTGRES_DB = os.getenv("POSTGRES_DB", "mydb")
+    required_keys = [
+        "POSTGRES_USER",
+        "POSTGRES_PASSWORD",
+        "POSTGRES_HOST",
+        "POSTGRES_PORT",
+        "POSTGRES_DB",
+    ]
 
-    required_vars = {
-        "POSTGRES_USER": POSTGRES_USER,
-        "POSTGRES_PASSWORD": POSTGRES_PASSWORD,
-        "POSTGRES_HOST": POSTGRES_HOST,
-        "POSTGRES_PORT": POSTGRES_PORT,
-        "POSTGRES_DB": POSTGRES_DB,
-    }
-
-    for key, value in required_vars.items():
+    required_vars = {}
+    for key in required_keys:
+        value = os.getenv(key)
         if not value:
             raise EnvironmentError(f"Missing required environment variable: {key}")
-
+        required_vars[key] = value
 
     DATABASE_URL = (
         f"postgresql+psycopg2://{POSTGRES_USER}:{POSTGRES_PASSWORD}"
