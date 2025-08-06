@@ -1,5 +1,5 @@
 from sqlalchemy import inspect
-from framework.models import ChuckJoke
+from models.chuck_joke import ChuckJoke
 
 def test_chuckjoke_model_definition():
     """Test the ChuckJoke model's SQLAlchemy table and columns."""

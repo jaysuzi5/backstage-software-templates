@@ -31,6 +31,7 @@ from framework.db import engine, SessionLocal
 from models.chuck_joke import Base
 from api import health, info, sample  # Import routers
 from sqlalchemy.orm import Session
+from contextlib import asynccontextmanager
 
 
 # Initialize the FastAPI app instance
@@ -47,9 +48,15 @@ app.add_middleware(LoggingMiddleware)
 FastAPIInstrumentor.instrument_app(app)
 
 # Automatically create all database tables defined in models
-@app.on_event("startup")
-def startup():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup code
     Base.metadata.create_all(bind=engine)
+    yield
+    # Shutdown code
+
+app = FastAPI(lifespan=lifespan)
+
 
 def get_db() -> Session:
     db = SessionLocal()
