@@ -20,6 +20,12 @@ jobs:
       - name: Install xmllint
         run: sudo apt-get install -y libxml2-utils          
       - name: Run Unit Tests and Generate Report
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_DB: mydb      
         run: |
           export PYTHONPATH=./src
           pytest tests/unit \

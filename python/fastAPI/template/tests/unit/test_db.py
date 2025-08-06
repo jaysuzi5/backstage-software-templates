@@ -1,66 +1,57 @@
 import os
 import pytest
-from sqlalchemy.engine import Engine
-from sqlalchemy.orm import sessionmaker
-from importlib import reload
-import db  # your actual db.py file
+from unittest import mock
 
-
-def set_env_vars():
-    """Helper function to set environment variables for test DB config."""
-    os.environ["POSTGRES_USER"] = "test_user"
-    os.environ["POSTGRES_PASSWORD"] = "test_pass"
-    os.environ["POSTGRES_HOST"] = "localhost"
-    os.environ["POSTGRES_PORT"] = "5432"
-    os.environ["POSTGRES_DB"] = "test_db"
-
-
-def clear_env_vars():
-    """Helper function to clear the relevant environment variables."""
-    for var in [
-        "POSTGRES_USER", "POSTGRES_PASSWORD", "POSTGRES_HOST", 
-        "POSTGRES_PORT", "POSTGRES_DB"
-    ]:
-        os.environ.pop(var, None)
+# Import your function from the actual module
+from framework import db
 
 
 @pytest.fixture(autouse=True)
-def setup_and_teardown_env():
-    """Set up env vars before test and clean after."""
-    set_env_vars()
+def clear_env():
+    """Clear relevant env vars before each test."""
+    keys = [
+        "POSTGRES_USER", "POSTGRES_PASSWORD", "POSTGRES_HOST",
+        "POSTGRES_PORT", "POSTGRES_DB"
+    ]
+    original = {key: os.getenv(key) for key in keys}
+    for key in keys:
+        os.environ.pop(key, None)
     yield
-    clear_env_vars()
+    for key, val in original.items():
+        if val is not None:
+            os.environ[key] = val
 
 
-def test_database_url_construction():
-    """Test that DATABASE_URL is constructed correctly."""
-    reload(db)  # re-import to trigger re-evaluation of env vars
-    expected = (
-        "postgresql+psycopg2://test_user:test_pass@localhost:5432/test_db"
-    )
-    assert db.DATABASE_URL == expected
+def test_init_db_success(monkeypatch):
+    """Test init_db with all required env vars present."""
+    monkeypatch.setenv("POSTGRES_USER", "user")
+    monkeypatch.setenv("POSTGRES_PASSWORD", "pass")
+    monkeypatch.setenv("POSTGRES_HOST", "localhost")
+    monkeypatch.setenv("POSTGRES_PORT", "5432")
+    monkeypatch.setenv("POSTGRES_DB", "testdb")
+
+    with mock.patch("framework.db.create_engine") as mock_engine:
+        db.init_db()
+        expected_url = "postgresql+psycopg2://user:pass@localhost:5432/testdb"
+        mock_engine.assert_called_once_with(expected_url, pool_pre_ping=True)
+        assert db.SessionLocal is not None
+        assert db.engine is not None
 
 
-def test_engine_creation():
-    """Test that SQLAlchemy engine is created."""
-    reload(db)
-    assert isinstance(db.engine, Engine)
+@pytest.mark.parametrize("missing_key", [
+    "POSTGRES_USER", "POSTGRES_PASSWORD", "POSTGRES_HOST",
+    "POSTGRES_PORT", "POSTGRES_DB"
+])
+def test_init_db_missing_env_raises(missing_key, monkeypatch):
+    """Ensure missing environment variables raise errors."""
+    monkeypatch.setenv("POSTGRES_USER", "user")
+    monkeypatch.setenv("POSTGRES_PASSWORD", "pass")
+    monkeypatch.setenv("POSTGRES_HOST", "localhost")
+    monkeypatch.setenv("POSTGRES_PORT", "5432")
+    monkeypatch.setenv("POSTGRES_DB", "testdb")
 
+    monkeypatch.delenv(missing_key, raising=False)
 
-def test_sessionlocal_is_sessionmaker():
-    """Test that SessionLocal is a valid sessionmaker."""
-    reload(db)
-    assert isinstance(db.SessionLocal, sessionmaker)
-
-
-def test_missing_env_vars_causes_failure(monkeypatch):
-    """Test behavior when required environment variables are missing."""
-    clear_env_vars()
-    monkeypatch.delenv("POSTGRES_USER", raising=False)
-    monkeypatch.delenv("POSTGRES_PASSWORD", raising=False)
-    monkeypatch.delenv("POSTGRES_HOST", raising=False)
-    monkeypatch.delenv("POSTGRES_PORT", raising=False)
-    monkeypatch.delenv("POSTGRES_DB", raising=False)
-
-    with pytest.raises(Exception):
-        reload(db)
+    with pytest.raises(EnvironmentError) as exc_info:
+        db.init_db()
+    assert missing_key in str(exc_info.value)
