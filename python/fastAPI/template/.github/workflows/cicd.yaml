@@ -21,6 +21,7 @@ jobs:
         run: sudo apt-get install -y libxml2-utils          
       - name: Run Unit Tests and Generate Report
         run: |
+          export PYTHONPATH=./src
           pytest tests/unit \
             --cov=my_package \
             --cov-fail-under=70 \

@@ -26,9 +26,9 @@ Environment variables and database configuration are managed externally via `.en
 
 from fastapi import FastAPI
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-from middleware import LoggingMiddleware
-from db import engine
-from models import Base
+from framework.middleware import LoggingMiddleware
+from framework.db import engine
+from python.fastAPI.template.src.models.chuck_joke import Base
 from api import health, info, sample  # Import routers
 
 # Initialize the FastAPI app instance

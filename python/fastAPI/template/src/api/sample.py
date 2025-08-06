@@ -1,8 +1,9 @@
 import requests
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from db import SessionLocal
-from models import ChuckJoke
+from framework.db import SessionLocal
+from models.chuck_joke import ChuckJoke
+
 
 router = APIRouter()
 

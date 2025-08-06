@@ -2,10 +2,9 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-
-from db import Base
-from models import ChuckJoke
-from main import app, get_db  # adjust if your main app file is named differently
+from framework.db import Base
+from models.chuck_joke import ChuckJoke
+from app import ap, get_db
 
 # Use in-memory SQLite for testing
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
