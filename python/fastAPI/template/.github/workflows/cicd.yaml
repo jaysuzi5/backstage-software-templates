@@ -16,7 +16,8 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          pip install pytest==8.4.1 pytest-mock==3.14.1 asynctest==0.13.0 dotenv==0.9.9 pytest-asyncio==1.1.0
+          pip install pytest==8.4.1 pytest-cov==6.2.1 pytest-mock==3.14.1 asynctest==0.13.0 dotenv==0.9.9 pytest-asyncio==1.1.0
+          pip list
       - name: Install xmllint
         run: sudo apt-get install -y libxml2-utils          
       - name: Run Unit Tests and Generate Report
