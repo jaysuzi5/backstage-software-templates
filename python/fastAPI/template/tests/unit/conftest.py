@@ -1,4 +1,5 @@
 import pytest
+import logging
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -28,3 +29,10 @@ def client(db_session):
         yield db_session
     app.dependency_overrides[get_db] = override_get_db
     return TestClient(app)
+
+@pytest.fixture(autouse=True)
+def patch_otel_logger(monkeypatch):
+    dummy_logger = logging.getLogger("test")
+
+    # Patch methods you use, or just replace it completely
+    monkeypatch.setattr("framework.logging.logger", dummy_logger)
