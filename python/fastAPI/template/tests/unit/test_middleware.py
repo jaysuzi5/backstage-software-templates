@@ -1,8 +1,7 @@
 import pytest
-import asyncio
 from unittest.mock import AsyncMock, patch, MagicMock
 from starlette.responses import Response
-from middleware import LoggingMiddleware  # adjust import path as needed
+from framework.middleware import LoggingMiddleware  # adjust import path as needed
 
 
 @pytest.mark.asyncio

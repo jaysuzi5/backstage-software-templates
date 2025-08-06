@@ -1,10 +1,7 @@
 import pytest
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
-
-# Import your app and middleware class
-from main import app  # or wherever your FastAPI app with LoggingMiddleware is defined
+from framework.middleware import LoggingMiddleware
 
 @pytest.fixture
 def test_app():
@@ -12,7 +9,6 @@ def test_app():
     test_app = FastAPI()
 
     # Import your LoggingMiddleware class from your middleware module
-    from middleware import LoggingMiddleware
     test_app.add_middleware(LoggingMiddleware)
 
     # Add a simple test endpoint

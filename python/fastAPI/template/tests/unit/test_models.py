@@ -1,6 +1,5 @@
-import pytest
 from sqlalchemy import inspect
-from models import ChuckJoke
+from framework.models import ChuckJoke
 
 def test_chuckjoke_model_definition():
     """Test the ChuckJoke model's SQLAlchemy table and columns."""

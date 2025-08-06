@@ -1,6 +1,6 @@
 import pytest
 from datetime import datetime, timedelta
-from models import ChuckJoke
+from models.chuck_joke import ChuckJoke
 
 @pytest.mark.integration
 def test_chuckjoke_crud(db_session):
