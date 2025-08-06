@@ -1,5 +1,6 @@
 import logging
 import socket
+import sys
 import time
 import uuid
 import datetime
@@ -13,6 +14,20 @@ logger = logging.getLogger()
 logger.handlers.clear()
 logger.setLevel(logging.INFO)
 logger.addHandler(LoggingHandler())
+
+if "pytest" in sys.modules:
+    # Simple stdout handler for tests
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+else:
+    try:
+        from opentelemetry.sdk._logs import LoggingHandler
+        logger.addHandler(LoggingHandler())
+    except Exception:
+        # If OTEL isn't available or misconfigured, skip
+        pass
 
 class LoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -29,8 +44,9 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             "level": "INFO",
             "event": "Request",
             "method": method,
-            "path": path,
+            "app_name": app_name,
             "endpoint": endpoint,
+            "path": path,
             "remote_addr": request.client.host,
             "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
             "hostname": socket.gethostname(),
@@ -45,8 +61,9 @@ class LoggingMiddleware(BaseHTTPMiddleware):
                 "level": "ERROR",
                 "event": "Unhandled Exception",
                 "method": method,
-                "path": path,
+                "app_name": app_name,
                 "endpoint": endpoint,
+                "path": path,
                 "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
                 "exception": str(e),
                 "stack_trace": stack_trace,
@@ -59,8 +76,9 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             "level": "INFO",
             "event": "Response",
             "method": method,
-            "path": path,
+            "app_name": app_name,
             "endpoint": endpoint,
+            "path": path,
             "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
             "duration_seconds": round(duration, 4),
             "status": response.status_code,
