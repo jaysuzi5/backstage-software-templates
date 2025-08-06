@@ -27,9 +27,11 @@ Environment variables and database configuration are managed externally via `.en
 from fastapi import FastAPI
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from framework.middleware import LoggingMiddleware
-from framework.db import engine
+from framework.db import engine, SessionLocal
 from models.chuck_joke import Base
 from api import health, info, sample  # Import routers
+from sqlalchemy.orm import Session
+
 
 # Initialize the FastAPI app instance
 app = FastAPI(
@@ -48,6 +50,13 @@ FastAPIInstrumentor.instrument_app(app)
 @app.on_event("startup")
 def startup():
     Base.metadata.create_all(bind=engine)
+
+def get_db() -> Session:
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 # Register API route modules
 app.include_router(health.router, tags=["Health"])
