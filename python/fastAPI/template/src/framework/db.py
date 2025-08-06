@@ -17,12 +17,16 @@ def init_db():
         "POSTGRES_DB",
     ]
 
-    required_vars = {}
     for key in required_keys:
         value = os.getenv(key)
         if not value:
             raise EnvironmentError(f"Missing required environment variable: {key}")
-        required_vars[key] = value
+        if key == "POSTGRES_USER": POSTGRES_USER = value
+        elif key == "POSTGRES_PASSWORD": POSTGRES_PASSWORD = value
+        elif key == "POSTGRES_HOST": POSTGRES_HOST = value
+        elif key == "POSTGRES_PORT": POSTGRES_PORT  = value
+        elif key == "POSTGRES_DB": POSTGRES_DB  = value
+
 
     DATABASE_URL = (
         f"postgresql+psycopg2://{POSTGRES_USER}:{POSTGRES_PASSWORD}"
