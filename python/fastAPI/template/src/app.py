@@ -28,7 +28,7 @@ from fastapi import FastAPI
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from framework.middleware import LoggingMiddleware
 from framework.db import engine
-from python.fastAPI.template.src.models.chuck_joke import Base
+from models.chuck_joke import Base
 from api import health, info, sample  # Import routers
 
 # Initialize the FastAPI app instance
