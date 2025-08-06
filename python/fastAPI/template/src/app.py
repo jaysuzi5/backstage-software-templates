@@ -45,7 +45,9 @@ app.add_middleware(LoggingMiddleware)
 FastAPIInstrumentor.instrument_app(app)
 
 # Automatically create all database tables defined in models
-Base.metadata.create_all(bind=engine)
+@app.on_event("startup")
+def startup():
+    Base.metadata.create_all(bind=engine)
 
 # Register API route modules
 app.include_router(health.router, tags=["Health"])
