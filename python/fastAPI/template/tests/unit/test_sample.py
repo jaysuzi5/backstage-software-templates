@@ -96,7 +96,10 @@ def test_sample_handles_api_failure(mock_requests, client):
 
 def test_sample_handles_invalid_joke(mock_requests, client):
     """Test invalid response handling"""
-    mock_requests.return_value.json.return_value = {"invalid": "data"}
+    mock_response = mock_requests.return_value
+    mock_response.raise_for_status.return_value = None
+    mock_response.json.return_value = {"invalid": "data"}
+
     response = client.get("/api/thursday/v1/sample")
     assert response.status_code == 422
     mock_requests.assert_called_once_with('https://api.chucknorris.io/jokes/random')
