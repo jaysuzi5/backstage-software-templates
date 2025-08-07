@@ -18,7 +18,7 @@ async def test_logging_middleware_normal_flow():
     middleware = LoggingMiddleware(lambda req: None)
 
     # Patch logger.info to monitor calls
-    with patch("middleware.logger.info") as mock_info, patch("middleware.logger.error") as mock_error:
+    with patch("framework.middleware.logger.info") as mock_info, patch("framework.middleware.logger.error") as mock_error:
         # Act
         result = await middleware.dispatch(request, call_next)
 
@@ -53,7 +53,7 @@ async def test_logging_middleware_exception_flow():
     call_next = AsyncMock(side_effect=raise_exc)
     middleware = LoggingMiddleware(lambda req: None)
 
-    with patch("middleware.logger.info") as mock_info, patch("middleware.logger.error") as mock_error:
+    with patch("framework.middleware.logger.info") as mock_info, patch("framework.middleware.logger.error") as mock_error:
         # Act / Assert
         with pytest.raises(ValueError, match="Test exception"):
             await middleware.dispatch(request, call_next)
@@ -93,7 +93,7 @@ async def test_logging_middleware_app_name_and_endpoint_parsing():
 
         call_next = AsyncMock(return_value=Response(status_code=200))
 
-        with patch("middleware.logger.info") as mock_info:
+        with patch("framework.middleware.logger.info") as mock_info:
             await middleware.dispatch(request, call_next)
 
             # The first info call contains "Request" event and app_name logic
