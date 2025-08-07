@@ -7,7 +7,6 @@ import datetime
 import traceback
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi import Request
-from opentelemetry.sdk._logs import LoggingHandler
 
 # Configure logger
 logger = logging.getLogger()
@@ -22,10 +21,19 @@ if os.getenv("PYTEST_CURRENT_TEST"):
     logger.addHandler(handler)
 else:
     try:
+        # IMPORTANT: Move these imports inside the else block
         from opentelemetry.sdk._logs import LoggingHandler
-        logger.addHandler(LoggingHandler())
-    except Exception:
-        # If OTEL isn't available or misconfigured, revert to simple logging
+        from opentelemetry.sdk.resources import Resource
+        from opentelemetry.sdk._logs import LoggerProvider
+        
+        # Create a proper logger provider with resource
+        logger_provider = LoggerProvider(
+            resource=Resource.create({"service.name": "your-service-name"})
+        )
+        logger.addHandler(LoggingHandler(logger_provider=logger_provider))
+    except Exception as e:
+        print(f"Failed to initialize OpenTelemetry: {e}")
+        # Fallback to simple logging if OTEL fails
         handler = logging.StreamHandler()
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
         handler.setFormatter(formatter)
