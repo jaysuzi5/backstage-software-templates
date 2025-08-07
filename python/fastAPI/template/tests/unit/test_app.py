@@ -1,3 +1,4 @@
+import os
 from unittest import mock
 from fastapi.testclient import TestClient
 from sqlalchemy.exc import OperationalError
@@ -5,6 +6,7 @@ from app import app
 
 def test_lifespan_success():
     """Test that lifespan completes successfully"""
+    os.environ["TESTING"] = "false" 
     with mock.patch('src.app.init_db') as mock_init, \
          mock.patch('sqlalchemy.orm.Session.execute') as mock_execute:
         
@@ -18,6 +20,7 @@ def test_lifespan_success():
 
 def test_lifespan_retries_on_db_failure():
     """Test that lifespan retries on database connection failures"""
+    os.environ["TESTING"] = "false" 
     with mock.patch('src.app.init_db') as mock_init, \
          mock.patch('time.sleep') as mock_sleep, \
          mock.patch('sqlalchemy.orm.Session.execute') as mock_execute:
