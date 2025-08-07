@@ -5,7 +5,7 @@ from app import app
 
 def test_lifespan_success():
     """Test that lifespan completes successfully"""
-    with mock.patch('app.init_db') as mock_init, \
+    with mock.patch('src.app.init_db') as mock_init, \
          mock.patch('sqlalchemy.orm.Session.execute') as mock_execute:
         
         mock_execute.return_value = None
@@ -18,7 +18,7 @@ def test_lifespan_success():
 
 def test_lifespan_retries_on_db_failure():
     """Test that lifespan retries on database connection failures"""
-    with mock.patch('app.init_db') as mock_init, \
+    with mock.patch('src.app.init_db') as mock_init, \
          mock.patch('time.sleep') as mock_sleep, \
          mock.patch('sqlalchemy.orm.Session.execute') as mock_execute:
 
