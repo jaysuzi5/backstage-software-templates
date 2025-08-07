@@ -4,7 +4,8 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
-from framework.db import Base, init_db, get_db
+from framework.db import Base, get_db
+from framework import db as db_module
 from app import app
 
 # Set testing environment
@@ -18,10 +19,15 @@ def test_engine():
         connect_args={"check_same_thread": False},
         poolclass=StaticPool
     )
-    init_db("sqlite:///:memory:")  # Explicitly initialize with test URL
+
+    db_module.engine = engine
+    db_module.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+    # Now you can create tables
     Base.metadata.create_all(bind=engine)
     yield engine
     Base.metadata.drop_all(bind=engine)
+
 
 @pytest.fixture
 def db_session(test_engine):
@@ -31,8 +37,13 @@ def db_session(test_engine):
     Session = sessionmaker(bind=connection)
     db = Session()
     
+    # Start a savepoint for nested transactions
+    db.begin_nested()
+    
     yield db
     
+    # Cleanup
+    db.rollback()
     db.close()
     transaction.rollback()
     connection.close()
@@ -40,10 +51,7 @@ def db_session(test_engine):
 @pytest.fixture
 def client(db_session):
     def override_get_db():
-        try:
-            yield db_session
-        finally:
-            db_session.rollback()
+        yield db_session
     
     app.dependency_overrides[get_db] = override_get_db
     with TestClient(app) as test_client:
