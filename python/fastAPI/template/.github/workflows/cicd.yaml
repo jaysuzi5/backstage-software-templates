@@ -27,7 +27,7 @@ jobs:
         run: |
           export PYTHONPATH=./src
           pytest tests/unit \
-            --cov=app \
+            --cov=src \
             --cov-report=xml:coverage.xml \
             --cov-report=html:coverage_html \
             --cov-report=term-missing \

@@ -36,17 +36,19 @@ from sqlalchemy.exc import OperationalError
 from contextlib import asynccontextmanager
 
 
-# Automatically create all database tables defined in models
+# Setup the database on startup and for the life of the service
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     max_retries = 5
     retry_delay = 2
     
-    # Skip database initialization in test environment
     if os.getenv("TESTING") != "true":
         for attempt in range(max_retries):
             try:
+                from framework.db import init_db, SessionLocal
                 init_db()
+                from framework.db import engine
+                
                 Base.metadata.create_all(bind=engine)
                 with SessionLocal() as session:
                     session.execute("SELECT 1")
