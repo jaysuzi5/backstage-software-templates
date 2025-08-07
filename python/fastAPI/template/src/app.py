@@ -59,14 +59,6 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-
-def get_db() -> Session:
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
 # Register API route modules
 app.include_router(health.router, tags=["Health"])
 app.include_router(info.router, tags=["Info"])

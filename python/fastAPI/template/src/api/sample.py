@@ -1,9 +1,8 @@
 import requests
 from fastapi import APIRouter, Depends, HTTPException 
 from sqlalchemy.orm import Session
-from framework.db import SessionLocal
+from framework.db import get_db
 from models.chuck_joke import ChuckJoke
-
 
 router = APIRouter()
 

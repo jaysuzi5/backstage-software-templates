@@ -60,7 +60,6 @@ def init_db():
     )
 
 def get_db():
-    """Provide a database session for dependency injection."""
     if SessionLocal is None:
         init_db()
     
