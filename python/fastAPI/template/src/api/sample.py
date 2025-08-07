@@ -6,20 +6,17 @@ from models.chuck_joke import ChuckJoke
 
 router = APIRouter()
 
+
 @router.get("/api/thursday/v1/sample")
 def sample(db: Session = Depends(get_db)):
     try:
-        # Get joke from external API
         response = requests.get('https://api.chucknorris.io/jokes/random')
         response.raise_for_status()
         joke_data = response.json()
         
         # Validate response format
         if "value" not in joke_data:
-            raise HTTPException(
-                status_code=422,
-                detail="Invalid joke format from API"
-            )
+            raise HTTPException(status_code=422, detail="Invalid joke format from API")
             
         joke_text = joke_data["value"]
 
@@ -29,6 +26,7 @@ def sample(db: Session = Depends(get_db)):
             new_joke = ChuckJoke(joke=joke_text)
             db.add(new_joke)
             db.commit()
+            db.refresh(new_joke)
 
         # Get latest 10 jokes
         latest_jokes = (
