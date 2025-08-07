@@ -7,6 +7,28 @@ def mock_requests():
     with patch('requests.get') as mock_get:
         yield mock_get
 
+
+def test_sample_inserts_new_joke(mock_requests, client, db_session):
+    """Test that /sample inserts a new joke and verifies DB state"""
+    mock_requests.return_value.json.return_value = {
+        "id": "test123",
+        "value": "Chuck Norris can divide by zero.",
+        "created_at": "2020-01-01T00:00:00.000Z"
+    }
+    
+    # Test API response
+    response = client.get("/api/thursday/v1/sample")
+    assert response.status_code == 200
+    data = response.json()
+    assert "Chuck Norris can divide by zero." in [j["joke"] for j in data["jokes"]]
+    assert len(data["jokes"]) == 1
+    
+    # Verify mock and database
+    mock_requests.assert_called_once_with('https://api.chucknorris.io/jokes/random')
+    assert db_session.query(ChuckJoke).count() == 1
+    joke = db_session.query(ChuckJoke).first()
+    assert joke.joke == "Chuck Norris can divide by zero."
+
 def test_sample_inserts_new_joke(mock_requests, client, db_session, mock_joke_response):
     """Test that /sample inserts a new joke and verifies DB state"""
     mock_requests.return_value.json.return_value = mock_joke_response
