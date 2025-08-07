@@ -7,52 +7,51 @@ Base = declarative_base()
 SessionLocal: Optional[sessionmaker] = None
 engine: Optional[Any] = None
 
-
-
-
-
-def init_db():
+def init_db(database_url: str = None, **engine_kwargs):
     """Initialize the database connection."""
     global SessionLocal, engine
     
-    required_keys = {
-        "POSTGRES_USER": None,
-        "POSTGRES_PASSWORD": None,
-        "POSTGRES_HOST": None,
-        "POSTGRES_PORT": None,
-        "POSTGRES_DB": None
-    }
+    if database_url is None:  # Production configuration
+        required_keys = {
+            "POSTGRES_USER": None,
+            "POSTGRES_PASSWORD": None,
+            "POSTGRES_HOST": None,
+            "POSTGRES_PORT": None,
+            "POSTGRES_DB": None
+        }
 
-    # Validate and collect environment variables
-    missing_vars = []
-    for key in required_keys:
-        value = os.getenv(key)
-        if not value:
-            missing_vars.append(key)
-        required_keys[key] = value
-    
-    if missing_vars:
-        raise EnvironmentError(
-            f"Missing required environment variables: {', '.join(missing_vars)}"
+        missing_vars = []
+        for key in required_keys:
+            value = os.getenv(key)
+            if not value:
+                missing_vars.append(key)
+            required_keys[key] = value
+        
+        if missing_vars:
+            raise EnvironmentError(
+                f"Missing required environment variables: {', '.join(missing_vars)}"
+            )
+
+        database_url = (
+            f"postgresql+psycopg2://{required_keys['POSTGRES_USER']}:"
+            f"{required_keys['POSTGRES_PASSWORD']}@"
+            f"{required_keys['POSTGRES_HOST']}:"
+            f"{required_keys['POSTGRES_PORT']}/"
+            f"{required_keys['POSTGRES_DB']}"
         )
 
-    DATABASE_URL = (
-        f"postgresql+psycopg2://{required_keys['POSTGRES_USER']}:"
-        f"{required_keys['POSTGRES_PASSWORD']}@"
-        f"{required_keys['POSTGRES_HOST']}:"
-        f"{required_keys['POSTGRES_PORT']}/"
-        f"{required_keys['POSTGRES_DB']}"
-    )
+        # Default pool configuration for production
+        pool_config = {
+            "pool_pre_ping": True,
+            "pool_size": int(os.getenv("DB_POOL_SIZE", 10)),
+            "max_overflow": int(os.getenv("DB_MAX_OVERFLOW", 20)),
+            "pool_recycle": int(os.getenv("DB_POOL_RECYCLE", 3600))
+        }
+        pool_config.update(engine_kwargs)
+    else:  # Test configuration
+        pool_config = engine_kwargs
 
-    # Optional pool configuration with defaults
-    pool_config = {
-        "pool_pre_ping": True,
-        "pool_size": int(os.getenv("DB_POOL_SIZE", 10)),
-        "max_overflow": int(os.getenv("DB_MAX_OVERFLOW", 20)),
-        "pool_recycle": int(os.getenv("DB_POOL_RECYCLE", 3600))
-    }
-
-    engine = create_engine(DATABASE_URL, **pool_config)
+    engine = create_engine(database_url, **pool_config)
     SessionLocal = sessionmaker(
         autocommit=False,
         autoflush=False,
@@ -61,7 +60,7 @@ def init_db():
 
 def get_db():
     if SessionLocal is None:
-        init_db()
+        init_db()  # Will raise error if prod env vars not set
     
     db = SessionLocal()
     try:

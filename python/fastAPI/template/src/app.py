@@ -45,7 +45,6 @@ async def lifespan(app: FastAPI):
         try:
             init_db()
             Base.metadata.create_all(bind=engine)
-            # Test connection
             with SessionLocal() as session:
                 session.execute("SELECT 1")
             break
@@ -54,8 +53,6 @@ async def lifespan(app: FastAPI):
                 raise
             sleep(retry_delay)
     yield
-    
-    # Optional: Add any cleanup code here
 
 app = FastAPI(lifespan=lifespan)
 
