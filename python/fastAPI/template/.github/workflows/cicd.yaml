@@ -18,8 +18,6 @@ jobs:
           pip install -r requirements.txt
           pip install pytest==8.4.1 pytest-cov==6.2.1 pytest-mock==3.14.1 asynctest==0.13.0 dotenv==0.9.9 pytest-asyncio==1.1.0 python-multipart==0.0.20
           pip list
-      - name: Install xmllint
-        run: sudo apt-get install -y libxml2-utils          
       - name: Run Unit Tests and Generate Report
         env:
           POSTGRES_USER: postgres
@@ -41,6 +39,8 @@ jobs:
           path: |
             results.xml
             coverage.xml          
+      - name: Install xmllint
+        run: sudo apt-get install -y libxml2-utils       
       - name: Fail if <95% test cases passed
         run: |
           total=$(xmllint --xpath 'string(count(//testcase))' results.xml)
