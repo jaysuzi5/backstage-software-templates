@@ -17,7 +17,6 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install pytest==8.4.1 pytest-cov==6.2.1 pytest-mock==3.14.1 asynctest==0.13.0 dotenv==0.9.9 pytest-asyncio==1.1.0 python-multipart==0.0.20
-          pip list
       - name: Run Unit Tests and Generate Report
         env:
           POSTGRES_USER: postgres
