@@ -33,20 +33,6 @@ from api import health, info, sample  # Import routers
 from sqlalchemy.orm import Session
 from contextlib import asynccontextmanager
 
-
-# Initialize the FastAPI app instance
-app = FastAPI(
-    title="Chuck Norris Joke Service",
-    description="A microservice to provide Chuck Norris jokes and system health/info endpoints.",
-    version="1.0.0"
-)
-
-# Register custom request/response logging middleware
-app.add_middleware(LoggingMiddleware)
-
-# Enable OpenTelemetry tracing for the app
-FastAPIInstrumentor.instrument_app(app)
-
 # Automatically create all database tables defined in models
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -56,6 +42,12 @@ async def lifespan(app: FastAPI):
     # Shutdown code
 
 app = FastAPI(lifespan=lifespan)
+
+# Register custom request/response logging middleware
+app.add_middleware(LoggingMiddleware)
+
+# Enable OpenTelemetry tracing for the app
+FastAPIInstrumentor.instrument_app(app)
 
 
 def get_db() -> Session:
