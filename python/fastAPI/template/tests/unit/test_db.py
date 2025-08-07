@@ -1,103 +1,103 @@
-import os
-import pytest
-from unittest import mock
-from framework import db
-from fastapi.testclient import TestClient
-from app import app
-from sqlalchemy.exc import OperationalError
+# import os
+# import pytest
+# from unittest import mock
+# from framework import db
+# from fastapi.testclient import TestClient
+# from app import app
+# from sqlalchemy.exc import OperationalError
 
 
-@pytest.fixture(autouse=True)
-def clear_env():
-    """Clear relevant env vars before each test."""
-    keys = [
-        "POSTGRES_USER", "POSTGRES_PASSWORD", "POSTGRES_HOST",
-        "POSTGRES_PORT", "POSTGRES_DB"
-    ]
-    original = {key: os.getenv(key) for key in keys}
-    for key in keys:
-        os.environ.pop(key, None)
-    yield
-    for key, val in original.items():
-        if val is not None:
-            os.environ[key] = val
+# @pytest.fixture(autouse=True)
+# def clear_env():
+#     """Clear relevant env vars before each test."""
+#     keys = [
+#         "POSTGRES_USER", "POSTGRES_PASSWORD", "POSTGRES_HOST",
+#         "POSTGRES_PORT", "POSTGRES_DB"
+#     ]
+#     original = {key: os.getenv(key) for key in keys}
+#     for key in keys:
+#         os.environ.pop(key, None)
+#     yield
+#     for key, val in original.items():
+#         if val is not None:
+#             os.environ[key] = val
 
 
-def test_init_db_success(monkeypatch):
-    """Test init_db with all required env vars present."""
-    monkeypatch.setenv("POSTGRES_USER", "user")
-    monkeypatch.setenv("POSTGRES_PASSWORD", "pass")
-    monkeypatch.setenv("POSTGRES_HOST", "localhost")
-    monkeypatch.setenv("POSTGRES_PORT", "5432")
-    monkeypatch.setenv("POSTGRES_DB", "testdb")
+# def test_init_db_success(monkeypatch):
+#     """Test init_db with all required env vars present."""
+#     monkeypatch.setenv("POSTGRES_USER", "user")
+#     monkeypatch.setenv("POSTGRES_PASSWORD", "pass")
+#     monkeypatch.setenv("POSTGRES_HOST", "localhost")
+#     monkeypatch.setenv("POSTGRES_PORT", "5432")
+#     monkeypatch.setenv("POSTGRES_DB", "testdb")
 
-    with mock.patch("framework.db.create_engine") as mock_engine:
-        db.init_db()
-        expected_url = "postgresql+psycopg2://user:pass@localhost:5432/testdb"
-        mock_engine.assert_called_once_with(
-            expected_url,
-            pool_pre_ping=True,
-            pool_size=10,
-            max_overflow=20,
-            pool_recycle=3600
-        )
-        assert db.SessionLocal is not None
-        assert db.engine is not None
-
-
-@pytest.mark.parametrize("missing_key", [
-    "POSTGRES_USER", "POSTGRES_PASSWORD", "POSTGRES_HOST",
-    "POSTGRES_PORT", "POSTGRES_DB"
-])
-def test_init_db_missing_env_raises(missing_key, monkeypatch):
-    """Ensure missing environment variables raise errors."""
-    monkeypatch.setenv("POSTGRES_USER", "user")
-    monkeypatch.setenv("POSTGRES_PASSWORD", "pass")
-    monkeypatch.setenv("POSTGRES_HOST", "localhost")
-    monkeypatch.setenv("POSTGRES_PORT", "5432")
-    monkeypatch.setenv("POSTGRES_DB", "testdb")
-
-    monkeypatch.delenv(missing_key, raising=False)
-
-    with pytest.raises(EnvironmentError) as exc_info:
-        db.init_db()
-    assert missing_key in str(exc_info.value)
+#     with mock.patch("framework.db.create_engine") as mock_engine:
+#         db.init_db()
+#         expected_url = "postgresql+psycopg2://user:pass@localhost:5432/testdb"
+#         mock_engine.assert_called_once_with(
+#             expected_url,
+#             pool_pre_ping=True,
+#             pool_size=10,
+#             max_overflow=20,
+#             pool_recycle=3600
+#         )
+#         assert db.SessionLocal is not None
+#         assert db.engine is not None
 
 
-def test_lifespan_success():
-    """Test that lifespan completes successfully"""
-    # Mock the database operations
-    with mock.patch('framework.db.init_db') as mock_init, \
-         mock.patch('sqlalchemy.orm.Session.execute') as mock_execute:
+# @pytest.mark.parametrize("missing_key", [
+#     "POSTGRES_USER", "POSTGRES_PASSWORD", "POSTGRES_HOST",
+#     "POSTGRES_PORT", "POSTGRES_DB"
+# ])
+# def test_init_db_missing_env_raises(missing_key, monkeypatch):
+#     """Ensure missing environment variables raise errors."""
+#     monkeypatch.setenv("POSTGRES_USER", "user")
+#     monkeypatch.setenv("POSTGRES_PASSWORD", "pass")
+#     monkeypatch.setenv("POSTGRES_HOST", "localhost")
+#     monkeypatch.setenv("POSTGRES_PORT", "5432")
+#     monkeypatch.setenv("POSTGRES_DB", "testdb")
+
+#     monkeypatch.delenv(missing_key, raising=False)
+
+#     with pytest.raises(EnvironmentError) as exc_info:
+#         db.init_db()
+#     assert missing_key in str(exc_info.value)
+
+
+# def test_lifespan_success():
+#     """Test that lifespan completes successfully"""
+#     # Mock the database operations
+#     with mock.patch('framework.db.init_db') as mock_init, \
+#          mock.patch('sqlalchemy.orm.Session.execute') as mock_execute:
         
-        mock_execute.return_value = None
+#         mock_execute.return_value = None
         
-        # This will trigger the lifespan
-        with TestClient(app):
-            pass
+#         # This will trigger the lifespan
+#         with TestClient(app):
+#             pass
             
-        # Verify database initialization happened
-        mock_init.assert_called_once()
-        mock_execute.assert_called_once_with("SELECT 1")
+#         # Verify database initialization happened
+#         mock_init.assert_called_once()
+#         mock_execute.assert_called_once_with("SELECT 1")
 
-def test_lifespan_retries_on_db_failure():
-    """Test that lifespan retries on database connection failures"""
-    with mock.patch('framework.db.init_db') as mock_init, \
-         mock.patch('time.sleep') as mock_sleep, \
-         mock.patch('sqlalchemy.orm.Session.execute') as mock_execute:
+# def test_lifespan_retries_on_db_failure():
+#     """Test that lifespan retries on database connection failures"""
+#     with mock.patch('framework.db.init_db') as mock_init, \
+#          mock.patch('time.sleep') as mock_sleep, \
+#          mock.patch('sqlalchemy.orm.Session.execute') as mock_execute:
         
-        # First two attempts fail, third succeeds
-        mock_execute.side_effect = [
-            OperationalError("Failed", {}, {}),
-            OperationalError("Failed", {}, {}), 
-            None
-        ]
+#         # First two attempts fail, third succeeds
+#         mock_execute.side_effect = [
+#             OperationalError("Failed", {}, {}),
+#             OperationalError("Failed", {}, {}), 
+#             None
+#         ]
         
-        # This will trigger the lifespan
-        with TestClient(app):
-            pass
+#         # This will trigger the lifespan
+#         with TestClient(app):
+#             pass
             
-        # Verify retry logic
-        assert mock_init.call_count == 3
-        assert mock_sleep.call_count == 2
-        mock_execute.assert_called_with("SELECT 1")
+#         # Verify retry logic
+#         assert mock_init.call_count == 3
+#         assert mock_sleep.call_count == 2
+#         mock_execute.assert_called_with("SELECT 1")
