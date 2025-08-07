@@ -13,7 +13,6 @@ from opentelemetry.sdk._logs import LoggingHandler
 logger = logging.getLogger()
 logger.handlers.clear()
 logger.setLevel(logging.INFO)
-logger.addHandler(LoggingHandler())
 
 if os.getenv("PYTEST_CURRENT_TEST"):
     # Simple stdout handler for tests
