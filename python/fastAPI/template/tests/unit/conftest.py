@@ -45,7 +45,8 @@ def db_session(test_engine):
     # Cleanup
     db.rollback()
     db.close()
-    transaction.rollback()
+    if transaction.is_active:
+        transaction.rollback()
     connection.close()
 
 @pytest.fixture
