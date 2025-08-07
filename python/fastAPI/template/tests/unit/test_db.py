@@ -33,7 +33,13 @@ def test_init_db_success(monkeypatch):
     with mock.patch("framework.db.create_engine") as mock_engine:
         db.init_db()
         expected_url = "postgresql+psycopg2://user:pass@localhost:5432/testdb"
-        mock_engine.assert_called_once_with(expected_url, pool_pre_ping=True)
+        mock_engine.assert_called_once_with(
+            expected_url,
+            pool_pre_ping=True,
+            pool_size=10,
+            max_overflow=20,
+            pool_recycle=3600
+        )
         assert db.SessionLocal is not None
         assert db.engine is not None
 

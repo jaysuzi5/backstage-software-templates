@@ -7,6 +7,10 @@ Base = declarative_base()
 SessionLocal: Optional[sessionmaker] = None
 engine: Optional[Any] = None
 
+
+
+
+
 def init_db():
     """Initialize the database connection."""
     global SessionLocal, engine
@@ -40,13 +44,15 @@ def init_db():
         f"{required_keys['POSTGRES_DB']}"
     )
 
-    engine = create_engine(
-        DATABASE_URL,
-        pool_pre_ping=True,
-        pool_size=10,
-        max_overflow=20,
-        pool_recycle=3600
-    )
+    # Optional pool configuration with defaults
+    pool_config = {
+        "pool_pre_ping": True,
+        "pool_size": int(os.getenv("DB_POOL_SIZE", 10)),
+        "max_overflow": int(os.getenv("DB_MAX_OVERFLOW", 20)),
+        "pool_recycle": int(os.getenv("DB_POOL_RECYCLE", 3600))
+    }
+
+    engine = create_engine(DATABASE_URL, **pool_config)
     SessionLocal = sessionmaker(
         autocommit=False,
         autoflush=False,
