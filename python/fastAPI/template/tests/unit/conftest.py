@@ -35,4 +35,4 @@ def patch_otel_logger(monkeypatch):
     dummy_logger = logging.getLogger("test")
 
     # Patch methods you use, or just replace it completely
-    monkeypatch.setattr("framework.logging.logger", dummy_logger)
+    monkeypatch.setattr("framework.middleware.logger", dummy_logger)
