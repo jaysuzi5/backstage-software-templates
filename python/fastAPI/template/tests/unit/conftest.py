@@ -1,3 +1,4 @@
+import os
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -5,6 +6,9 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 from framework.db import Base, init_db, get_db
 from app import app
+
+# Set testing environment
+os.environ["TESTING"] = "true"
 
 # Initialize test database once per session
 @pytest.fixture(scope="session")

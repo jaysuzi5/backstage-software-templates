@@ -24,6 +24,7 @@ Start the application using an ASGI server such as Uvicorn:
 Environment variables and database configuration are managed externally via `.env` files.
 """
 from time import sleep
+import os
 from fastapi import FastAPI
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from framework.middleware import LoggingMiddleware
@@ -41,17 +42,19 @@ async def lifespan(app: FastAPI):
     max_retries = 5
     retry_delay = 2
     
-    for attempt in range(max_retries):
-        try:
-            init_db()
-            Base.metadata.create_all(bind=engine)
-            with SessionLocal() as session:
-                session.execute("SELECT 1")
-            break
-        except OperationalError as e:
-            if attempt == max_retries - 1:
-                raise
-            sleep(retry_delay)
+    # Skip database initialization in test environment
+    if os.getenv("TESTING") != "true":
+        for attempt in range(max_retries):
+            try:
+                init_db()
+                Base.metadata.create_all(bind=engine)
+                with SessionLocal() as session:
+                    session.execute("SELECT 1")
+                break
+            except OperationalError as e:
+                if attempt == max_retries - 1:
+                    raise
+                sleep(retry_delay)
     yield
 
 app = FastAPI(lifespan=lifespan)
