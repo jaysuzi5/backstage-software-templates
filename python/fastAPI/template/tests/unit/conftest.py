@@ -5,22 +5,25 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 from framework.db import Base, get_db
+from framework import db as db_module
 from app import app
 
-
-# Set testing environment for all tests
+# Set testing environment
 os.environ["TESTING"] = "true"
 
+# Initialize test database once per session
 @pytest.fixture(scope="session")
 def test_engine():
-    """Creates a shared in-memory SQLite engine for all tests."""
     engine = create_engine(
         "sqlite:///:memory:",
         connect_args={"check_same_thread": False},
         poolclass=StaticPool
     )
 
-    # Create tables once for the session
+    db_module.engine = engine
+    db_module.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+    # Now you can create tables
     Base.metadata.create_all(bind=engine)
     yield engine
     Base.metadata.drop_all(bind=engine)
@@ -28,43 +31,33 @@ def test_engine():
 
 @pytest.fixture
 def db_session(test_engine):
-    """Creates a fresh database session with nested transaction rollback."""
+    """Creates a fresh database session for each test"""
     connection = test_engine.connect()
     transaction = connection.begin()
     Session = sessionmaker(bind=connection)
     db = Session()
-
+    
+    # Start a savepoint for nested transactions
     db.begin_nested()
+    
     yield db
-
+    
+    # Cleanup
     db.rollback()
     db.close()
     if transaction.is_active:
         transaction.rollback()
     connection.close()
 
-
 @pytest.fixture
-def client(db_session, monkeypatch, test_engine):
-    """Provides a test client that uses the in-memory DB and patched engine/session."""
-    
-    # Override get_engine and get_session_local
-    from framework import db as db_module
-
-    monkeypatch.setattr(db_module, "get_engine", lambda: test_engine)
-    monkeypatch.setattr(db_module, "get_session_local", lambda: lambda: db_session)
-
-    # Also override FastAPI dependency injection
+def client(db_session):
     def override_get_db():
         yield db_session
-
+    
     app.dependency_overrides[get_db] = override_get_db
-
     with TestClient(app) as test_client:
         yield test_client
-
     app.dependency_overrides.clear()
-
 
 @pytest.fixture
 def mock_joke_response():
@@ -76,4 +69,4 @@ def mock_joke_response():
         "updated_at": "2020-01-05 13:42:22.980058",
         "url": "https://api.chucknorris.io/jokes/abc123",
         "value": "Chuck Norris can divide by zero."
-    }
+    }    
