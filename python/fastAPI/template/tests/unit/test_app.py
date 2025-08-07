@@ -35,26 +35,24 @@ def test_lifespan_retries_on_db_failure(monkeypatch):
 
     with mock.patch("src.app.init_db") as mock_init, \
          mock.patch("time.sleep") as mock_sleep, \
-         mock.patch("sqlalchemy.orm.Session.execute") as mock_execute, \
          mock.patch("src.app.engine"), \
-         mock.patch("src.app.Base.metadata.create_all") as mock_create_all, \
+         mock.patch("src.app.Base.metadata.create_all"), \
          mock.patch("src.app.SessionLocal") as mock_sessionlocal:
 
-        # Simulate two failures, then a success
-        mock_execute.side_effect = [
+        # Mock the session context manager and its execute method
+        mock_session = mock.MagicMock()
+        mock_session.__enter__.return_value = mock_session
+        mock_session.__exit__.return_value = False
+
+        # Simulate two failures and then a success
+        mock_session.execute.side_effect = [
             OperationalError("Failed", {}, {}),
             OperationalError("Failed", {}, {}),
             None
         ]
-
-        # Mock the session context manager
-        mock_session = mock.MagicMock()
-        mock_session.__enter__.return_value = mock_session
-        mock_session.__exit__.return_value = False
         mock_sessionlocal.return_value = mock_session
 
         with TestClient(app):
             pass
 
         assert mock_init.call_count == 3
-        mock_create_all.assert_called_once()

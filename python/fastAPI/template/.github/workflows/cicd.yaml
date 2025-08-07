@@ -28,6 +28,9 @@ jobs:
           export PYTHONPATH=./src
           pytest tests/unit \
             --cov=app \
+            --cov-report=xml:coverage.xml \
+            --cov-report=html:coverage_html \
+            --cov-report=term-missing \
             --cov-fail-under=70 \
             --junitxml=results.xml
       - name: Upload reports
@@ -37,7 +40,8 @@ jobs:
           name: test-reports
           path: |
             results.xml
-            coverage.xml          
+            coverage.xml
+            coverage_html/**          
       - name: Install xmllint
         run: sudo apt-get install -y libxml2-utils       
       - name: Fail if <95% test cases passed
