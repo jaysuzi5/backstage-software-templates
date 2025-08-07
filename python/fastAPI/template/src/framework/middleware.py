@@ -1,6 +1,5 @@
 import logging
 import socket
-import sys
 import time
 import uuid
 import datetime
@@ -15,7 +14,7 @@ logger.handlers.clear()
 logger.setLevel(logging.INFO)
 logger.addHandler(LoggingHandler())
 
-if "pytest" in sys.modules:
+if os.getenv("PYTEST_CURRENT_TEST"):
     # Simple stdout handler for tests
     handler = logging.StreamHandler()
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
@@ -26,8 +25,11 @@ else:
         from opentelemetry.sdk._logs import LoggingHandler
         logger.addHandler(LoggingHandler())
     except Exception:
-        # If OTEL isn't available or misconfigured, skip
-        pass
+        # If OTEL isn't available or misconfigured, revert to simple logging
+        handler = logging.StreamHandler()
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
 
 class LoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
