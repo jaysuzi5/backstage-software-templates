@@ -1,5 +1,5 @@
 import requests
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException 
 from sqlalchemy.orm import Session
 from framework.db import SessionLocal
 from models.chuck_joke import ChuckJoke
@@ -7,56 +7,56 @@ from models.chuck_joke import ChuckJoke
 
 router = APIRouter()
 
-def get_db():
-    """
-    Dependency that provides a SQLAlchemy database session.
-    Closes the session when the request is finished.
-    """
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-@router.get("/api/${{values.app_name}}/v1/sample")
+@router.get("/api/thursday/v1/sample")
 def sample(db: Session = Depends(get_db)):
-    """
-    Fetches a random Chuck Norris joke from an external API, 
-    stores it in the local database if it doesn't already exist, 
-    and returns both the fetched joke and the 10 most recent jokes stored.
+    try:
+        # Get joke from external API
+        response = requests.get('https://api.chucknorris.io/jokes/random')
+        response.raise_for_status()
+        joke_data = response.json()
+        
+        # Validate response format
+        if "value" not in joke_data:
+            raise HTTPException(
+                status_code=422,
+                detail="Invalid joke format from API"
+            )
+            
+        joke_text = joke_data["value"]
 
-    Parameters:
-        db (Session): SQLAlchemy session injected by FastAPI's Depends.
+        # Check if joke exists in DB
+        exists = db.query(ChuckJoke).filter_by(joke=joke_text).first()
+        if not exists:
+            new_joke = ChuckJoke(joke=joke_text)
+            db.add(new_joke)
+            db.commit()
 
-    Returns:
-        dict: JSON response containing:
-            - 'api_data': the full JSON from the external Chuck Norris API.
-            - 'jokes': a list of the 10 most recent jokes stored locally.
-    """
-    response = requests.get('https://api.chucknorris.io/jokes/random')
-    joke_data = response.json()
-    joke_text = joke_data.get("value")
+        # Get latest 10 jokes
+        latest_jokes = (
+            db.query(ChuckJoke)
+            .order_by(ChuckJoke.create_date.desc())
+            .limit(10)
+            .all()
+        )
 
-    exists = db.query(ChuckJoke).filter_by(joke=joke_text).first()
-    if not exists:
-        new_joke = ChuckJoke(joke=joke_text)
-        db.add(new_joke)
-        db.commit()
+        return {
+            "api_data": joke_data,
+            "jokes": [
+                {
+                    "id": j.id,
+                    "joke": j.joke,
+                    "create_date": j.create_date.isoformat()
+                } for j in latest_jokes
+            ]
+        }
 
-    latest_jokes = (
-        db.query(ChuckJoke)
-        .order_by(ChuckJoke.create_date.desc())
-        .limit(10)
-        .all()
-    )
-
-    return {
-        "api_data": joke_data,
-        "jokes": [
-            {
-                "id": j.id,
-                "joke": j.joke,
-                "create_date": j.create_date.isoformat()
-            } for j in latest_jokes
-        ]
-    }
+    except requests.RequestException as e:
+        raise HTTPException(
+            status_code=502,
+            detail=f"External API request failed: {str(e)}"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal server error: {str(e)}"
+        )
