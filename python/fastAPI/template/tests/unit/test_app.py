@@ -6,13 +6,13 @@ from app import app
 
 def test_lifespan_success(monkeypatch):
     """Test that lifespan completes successfully"""
-    monkeypatch.setenv("TESTING", "true")
+    # Ensure TESTING is not set so init_db() is called
+    monkeypatch.delenv("TESTING", raising=False)
+
     with mock.patch('src.app.init_db') as mock_init, \
          mock.patch('sqlalchemy.orm.Session.execute') as mock_execute:
-        
         mock_execute.return_value = None
-
-        with TestClient(app):  # This triggers the app lifespan
+        with TestClient(app):  # Triggers lifespan
             pass
 
         mock_init.assert_called_once()
@@ -20,12 +20,13 @@ def test_lifespan_success(monkeypatch):
 
 def test_lifespan_retries_on_db_failure(monkeypatch):
     """Test that lifespan retries on database connection failures"""
-    monkeypatch.setenv("TESTING", "true")
+    monkeypatch.delenv("TESTING", raising=False)
+
     with mock.patch('src.app.init_db') as mock_init, \
          mock.patch('time.sleep') as mock_sleep, \
          mock.patch('sqlalchemy.orm.Session.execute') as mock_execute:
 
-        # Simulate DB connection failure twice, then success
+        # Simulate two failures, then a success
         mock_execute.side_effect = [
             OperationalError("Failed", {}, {}),
             OperationalError("Failed", {}, {}),
