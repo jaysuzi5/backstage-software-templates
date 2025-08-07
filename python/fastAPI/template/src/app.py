@@ -23,31 +23,41 @@ Start the application using an ASGI server such as Uvicorn:
 
 Environment variables and database configuration are managed externally via `.env` files.
 """
-
+from time import sleep
 from fastapi import FastAPI
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from framework.middleware import LoggingMiddleware
-from framework.db import engine, SessionLocal
+from framework.db import engine, SessionLocal, init_db 
 from models.chuck_joke import Base
 from api import health, info, sample  # Import routers
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import OperationalError
 from contextlib import asynccontextmanager
+
 
 # Automatically create all database tables defined in models
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup code
-    Base.metadata.create_all(bind=engine)
+    max_retries = 5
+    retry_delay = 2
+    
+    for attempt in range(max_retries):
+        try:
+            init_db()
+            Base.metadata.create_all(bind=engine)
+            # Test connection
+            with SessionLocal() as session:
+                session.execute("SELECT 1")
+            break
+        except OperationalError as e:
+            if attempt == max_retries - 1:
+                raise
+            sleep(retry_delay)
     yield
-    # Shutdown code
+    
+    # Optional: Add any cleanup code here
 
 app = FastAPI(lifespan=lifespan)
-
-# Register custom request/response logging middleware
-app.add_middleware(LoggingMiddleware)
-
-# Enable OpenTelemetry tracing for the app
-FastAPIInstrumentor.instrument_app(app)
 
 
 def get_db() -> Session:
