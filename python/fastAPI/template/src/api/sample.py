@@ -52,6 +52,8 @@ def sample(db: Session = Depends(get_db)):
             status_code=502,
             detail=f"External API request failed: {str(e)}"
         )
+    except HTTPException:
+        raise  # Let fastapi handle the exception, specifically the 422 that we raised    
     except Exception as e:
         raise HTTPException(
             status_code=500,
