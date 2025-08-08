@@ -9,10 +9,13 @@ from fastapi import Request
 from opentelemetry.sdk._logs import LoggingHandler
 
 # Configure logger
-logger = logging.getLogger()
-logger.handlers.clear()
-logger.setLevel(logging.INFO)
-logger.addHandler(LoggingHandler())
+middleware_logger = logging.getLogger("middleware")
+middleware_logger.setLevel(logging.INFO)
+
+# Only add a handler if none exists (prevents duplication in test runners)
+if not middleware_logger.handlers:
+    middleware_logger.addHandler(LoggingHandler())
+
 
 class LoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -25,7 +28,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         endpoint = parts[-1]
         app_name = parts[1] if len(parts) >= 4 and parts[0] == 'api' and parts[2] == 'v1' else None
 
-        logger.info({
+        middleware_logger.info({
             "level": "INFO",
             "event": "Request",
             "method": method,
@@ -42,7 +45,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             response = await call_next(request)
         except Exception as e:
             stack_trace = traceback.format_exc()
-            logger.error({
+            middleware_logger.error({
                 "level": "ERROR",
                 "event": "Unhandled Exception",
                 "method": method,
@@ -57,7 +60,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             raise e
 
         duration = time.time() - start_time
-        logger.info({
+        middleware_logger.info({
             "level": "INFO",
             "event": "Response",
             "method": method,
