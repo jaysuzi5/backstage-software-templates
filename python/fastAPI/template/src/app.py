@@ -3,11 +3,9 @@ import os
 import logging
 from fastapi import FastAPI
 import framework.db
-from framework.middleware import LoggingMiddleware
 from models.chuck_joke import Base
 from api import health, info, sample
 from sqlalchemy import text
-from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from contextlib import asynccontextmanager
 
 
@@ -40,6 +38,8 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 logger = logging.getLogger(__name__)
 if os.getenv("TESTING") != "true":
+    from framework.middleware import LoggingMiddleware
+    from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
     app.add_middleware(LoggingMiddleware)
     FastAPIInstrumentor.instrument_app(app)
 else:  # Basic logging when running tests
