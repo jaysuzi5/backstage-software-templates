@@ -1,4 +1,4 @@
-replicaCount: 3
+replicaCount: ${{app_containers}}
 resources:
   requests:
     cpu: 40m

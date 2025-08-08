@@ -13,6 +13,7 @@ spec:
       required:
         - component_id
         - environment
+        - num_containers
       properties:
         component_id:
           title: Component name
@@ -22,10 +23,18 @@ spec:
         environment:
           title: Environment
           type: string
+          default: dev
           description: The environment where this component will be deployed
           enum:
             - dev
             - prod
+        num_containers:
+          title: Number of Starting Containers
+          type: integer
+          description: The number of containers to start with
+          default: 1
+          minimum: 1
+          maximum: 10            
 
   steps:
     - id: fetch-base
@@ -36,6 +45,7 @@ spec:
         values:
           app_name: ${{parameters.component_id}}
           app_env: ${{parameters.environment}}
+          app_containers: ${{parameters.num_containers}}
 
     - id: publish
       name: Publish
