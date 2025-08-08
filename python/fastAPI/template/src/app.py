@@ -2,7 +2,7 @@ from time import sleep
 import os
 import logging
 from fastapi import FastAPI
-from framework.db import init_db, SessionLocal, engine
+import framework.db
 from models.chuck_joke import Base
 from api import health, info, sample
 from sqlalchemy.exc import OperationalError
@@ -19,15 +19,11 @@ async def lifespan(app: FastAPI):
         for attempt in range(max_retries):
             try:
                 logger.info(f"Attempting database connection (attempt {attempt + 1}/{max_retries})")
-                
-                # Initialize database
-                init_db()
-                
-                # Verify connection
-                Base.metadata.create_all(bind=engine)
-                with SessionLocal() as session:
+                framework.db.init_db()
+                Base.metadata.create_all(bind=framework.db.engine)
+                with framework.db.SessionLocal() as session:
                     session.execute("SELECT 1")
-                
+                        
                 logger.info("Database connection established successfully")
                 break
             except Exception as e:
