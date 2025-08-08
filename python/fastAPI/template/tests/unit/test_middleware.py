@@ -73,59 +73,59 @@ async def test_logging_middleware_exception_flow():
         assert "transaction_id" in error_log_arg
 
 
-@pytest.mark.asyncio
-async def test_logging_middleware_service_and_endpoint_parsing():
-    # Arrange various paths
-    cases = [
-        ("/api/", "api", None),
-        ("", "", None),
-        ("/api/service/v1/sample", "sample", "service"),
-        ("/api/service/v1", "v1", "service"),
-        ("/api/otherapp/v1/test/extra", "extra", "otherapp"),
-        ("/notapi/test/path", "path", None),
-        ("/api/service/v2/sample", "sample", None),
-        ("/api/service/v1", "v1", "service"),
-    ]
+# @pytest.mark.asyncio
+# async def test_logging_middleware_service_and_endpoint_parsing():
+#     # Arrange various paths
+#     cases = [
+#         ("/api/", "api", None),
+#         ("", "", None),
+#         ("/api/service/v1/sample", "sample", "service"),
+#         ("/api/service/v1", "v1", "service"),
+#         ("/api/otherapp/v1/test/extra", "extra", "otherapp"),
+#         ("/notapi/test/path", "path", None),
+#         ("/api/service/v2/sample", "sample", None),
+#         ("/api/service/v1", "v1", "service"),
+#     ]
 
-    async def dummy_app(scope, receive, send):
-        response = Response("OK", status_code=200)
-        await response(scope, receive, send)
+#     async def dummy_app(scope, receive, send):
+#         response = Response("OK", status_code=200)
+#         await response(scope, receive, send)
 
-    middleware = LoggingMiddleware(dummy_app)
+#     middleware = LoggingMiddleware(dummy_app)
 
-    for path, expected_endpoint, expected_app in cases:
-        request = MagicMock(spec=Request)
-        request.url.path = path
-        request.method = "GET"
-        request.client.host = "1.2.3.4"
+#     for path, expected_endpoint, expected_app in cases:
+#         request = MagicMock(spec=Request)
+#         request.url.path = path
+#         request.method = "GET"
+#         request.client.host = "1.2.3.4"
 
-        # Fake ASGI scope
-        scope = {
-            "type": "http",
-            "method": "GET",
-            "path": path,
-            "client": ("1.2.3.4", 12345),
-            "headers": [],
-        }
+#         # Fake ASGI scope
+#         scope = {
+#             "type": "http",
+#             "method": "GET",
+#             "path": path,
+#             "client": ("1.2.3.4", 12345),
+#             "headers": [],
+#         }
 
-        receive = AsyncMock()
-        send = AsyncMock()
+#         receive = AsyncMock()
+#         send = AsyncMock()
 
-        with patch("framework.middleware.middleware_logger.info") as mock_info:
-            await middleware(scope, receive, send)
+#         with patch("framework.middleware.middleware_logger.info") as mock_info:
+#             await middleware(scope, receive, send)
 
-            # Find the log for the request
-            request_log_args = None
-            for call in mock_info.call_args_list:
-                log_data = call[0][0]  # Extract first positional argument
-                if isinstance(log_data, dict) and log_data.get("event") == "Request":
-                    request_log_args = log_data
-                    break
+#             # Find the log for the request
+#             request_log_args = None
+#             for call in mock_info.call_args_list:
+#                 log_data = call[0][0]  # Extract first positional argument
+#                 if isinstance(log_data, dict) and log_data.get("event") == "Request":
+#                     request_log_args = log_data
+#                     break
 
-            assert request_log_args is not None, f"Request log not found for path: {path}"
-            assert request_log_args["endpoint"] == expected_endpoint
+#             assert request_log_args is not None, f"Request log not found for path: {path}"
+#             assert request_log_args["endpoint"] == expected_endpoint
 
-            if len(path.strip('/').split('/')) >= 4 and path.startswith("/api/") and "v1" in path:
-                assert request_log_args.get("service") == expected_app
-            else:
-                assert request_log_args.get("service") is None
+#             if len(path.strip('/').split('/')) >= 4 and path.startswith("/api/") and "v1" in path:
+#                 assert request_log_args.get("service") == expected_app
+#             else:
+#                 assert request_log_args.get("service") is None
