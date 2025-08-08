@@ -16,7 +16,7 @@ def test_sample_inserts_new_joke(mock_requests, client, db_session):
     }
     
     # Make the API call
-    response = client.get("/api/thursday/v1/sample")
+    response = client.get("/api/${{values.app_name}}/v1/sample")
     assert response.status_code == 200
 
     print("API Response:", response.json())
@@ -43,7 +43,7 @@ def test_sample_inserts_new_joke(mock_requests, client, db_session, mock_joke_re
     mock_requests.return_value.json.return_value = mock_joke_response
     
     # Test API response
-    response = client.get("/api/thursday/v1/sample")
+    response = client.get("/api/${{values.app_name}}/v1/sample")
     assert response.status_code == 200
     data = response.json()
     assert "Chuck Norris can divide by zero." in [j["joke"] for j in data["jokes"]]
@@ -58,11 +58,11 @@ def test_sample_does_not_duplicate_jokes(mock_requests, client, db_session, mock
     mock_requests.return_value.json.return_value = mock_joke_response
 
     # First call
-    client.get("/api/thursday/v1/sample")
+    client.get("/api/${{values.app_name}}/v1/sample")
     assert db_session.query(ChuckJoke).count() == 1
     
     # Second call
-    response = client.get("/api/thursday/v1/sample")
+    response = client.get("/api/${{values.app_name}}/v1/sample")
     jokes = response.json()["jokes"]
     
     # Verify both API response and DB state
@@ -77,9 +77,9 @@ def test_sample_returns_latest_10_jokes(mock_requests, client, mock_joke_respons
             "id": f"joke-{i}",
             "value": f"Joke #{i}"
         }
-        client.get("/api/thursday/v1/sample")
+        client.get("/api/${{values.app_name}}/v1/sample")
 
-    response = client.get("/api/thursday/v1/sample")
+    response = client.get("/api/${{values.app_name}}/v1/sample")
     jokes = response.json()["jokes"]
     
     # Verify exact ordering and count
@@ -89,7 +89,7 @@ def test_sample_returns_latest_10_jokes(mock_requests, client, mock_joke_respons
 def test_sample_handles_api_failure(mock_requests, client):
     """Test API failure handling"""
     mock_requests.side_effect = Exception("API Error")
-    response = client.get("/api/thursday/v1/sample")
+    response = client.get("/api/${{values.app_name}}/v1/sample")
     assert response.status_code == 500
     assert "API Error" in response.json()["detail"]
     mock_requests.assert_called_once_with('https://api.chucknorris.io/jokes/random')
@@ -102,7 +102,7 @@ def test_sample_handles_invalid_joke(mock_requests, client):
     mock_response.raise_for_status.return_value = None
     mock_response.json.return_value = {"invalid": "data"}
     mock_requests.return_value = mock_response
-    response = client.get("/api/thursday/v1/sample")
+    response = client.get("/api/${{values.app_name}}/v1/sample")
 
     assert response.status_code == 422
     mock_requests.assert_called_once_with('https://api.chucknorris.io/jokes/random')

@@ -7,7 +7,7 @@ from models.chuck_joke import ChuckJoke
 router = APIRouter()
 
 
-@router.get("/api/thursday/v1/sample")
+@router.get("/api/${{values.app_name}}/v1/sample")
 def sample(db: Session = Depends(get_db)):
     try:
         response = requests.get('https://api.chucknorris.io/jokes/random')
