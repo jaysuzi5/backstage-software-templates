@@ -10,7 +10,7 @@ from sqlalchemy import text
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from contextlib import asynccontextmanager
 
-logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -36,10 +36,17 @@ async def lifespan(app: FastAPI):
                 sleep(retry_delay)
     yield
 
-app = FastAPI(lifespan=lifespan)
-app.add_middleware(LoggingMiddleware)
-FastAPIInstrumentor.instrument_app(app)
 
+app = FastAPI(lifespan=lifespan)
+logger = logging.getLogger(__name__)
+if os.getenv("TESTING") != "true":
+    app.add_middleware(LoggingMiddleware)
+    FastAPIInstrumentor.instrument_app(app)
+else:  # Basic logging when running tests
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
 # Register API route modules
 app.include_router(health.router, tags=["Health"])
