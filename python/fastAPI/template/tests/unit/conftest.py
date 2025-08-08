@@ -6,10 +6,14 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 from framework.db import Base, get_db
 from framework import db as db_module
+
+
+# Set testing environment: Need to set before we define the app
+os.environ["TESTING"] = "true"
+
 from app import app
 
-# Set testing environment
-os.environ["TESTING"] = "true"
+
 
 # Initialize test database once per session
 @pytest.fixture(scope="session")
