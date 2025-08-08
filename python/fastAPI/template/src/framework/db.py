@@ -73,3 +73,13 @@ def init_db(database_url: str = None, **engine_kwargs):
     except Exception as e:
         logger.error(f"Failed to initialize database: {str(e)}")
         raise
+
+def get_db():
+    if SessionLocal is None:
+        raise RuntimeError("Database not initialized. Call init_db() first.")
+    
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
