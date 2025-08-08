@@ -5,7 +5,7 @@ from fastapi import FastAPI
 import framework.db
 from models.chuck_joke import Base
 from api import health, info, sample
-from sqlalchemy.exc import OperationalError
+from sqlalchemy import text
 from contextlib import asynccontextmanager
 
 logger = logging.getLogger(__name__)
@@ -22,7 +22,7 @@ async def lifespan(app: FastAPI):
                 framework.db.init_db()
                 Base.metadata.create_all(bind=framework.db.engine)
                 with framework.db.SessionLocal() as session:
-                    session.execute("SELECT 1")
+                    session.execute(text("SELECT 1"))
                         
                 logger.info("Database connection established successfully")
                 break
