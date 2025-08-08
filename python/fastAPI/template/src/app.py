@@ -3,9 +3,11 @@ import os
 import logging
 from fastapi import FastAPI
 import framework.db
+from middleware import LoggingMiddleware
 from models.chuck_joke import Base
 from api import health, info, sample
 from sqlalchemy import text
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from contextlib import asynccontextmanager
 
 logger = logging.getLogger(__name__)
@@ -35,6 +37,9 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(lifespan=lifespan)
+app.add_middleware(LoggingMiddleware)
+FastAPIInstrumentor.instrument_app(app)
+
 
 # Register API route modules
 app.include_router(health.router, tags=["Health"])
