@@ -3,7 +3,7 @@ import os
 import logging
 from fastapi import FastAPI
 import framework.db
-from middleware import LoggingMiddleware
+from framework.middleware import LoggingMiddleware
 from models.chuck_joke import Base
 from api import health, info, sample
 from sqlalchemy import text
