@@ -28,9 +28,9 @@ jobs:
           # Default false
           echo "only_charts=false" >> $GITHUB_OUTPUT
 
-          # Check if ALL changed files are under charts/sample
-          if echo "$changed" | grep -qv '^charts/sample/'; then
-            echo "Detected changes outside charts/sample/"
+          # Check if ALL changed files are under charts/${{values.app_name}}
+          if echo "$changed" | grep -qv '^charts/${{values.app_name}}/'; then
+            echo "Detected changes outside charts/${{values.app_name}}/"
           else
             echo "only_charts=true" >> $GITHUB_OUTPUT
           fi
