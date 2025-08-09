@@ -20,7 +20,7 @@ jobs:
       - id: check
         run: |
           # Compare before and after commits
-          changed=$(git diff --name-only HEAD^ HEAD)
+          changed=$(git diff --name-only $(git merge-base HEAD origin/main) HEAD)
 
           echo "Changed files:"
           echo "$changed"
