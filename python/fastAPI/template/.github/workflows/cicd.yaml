@@ -177,7 +177,7 @@ jobs:
           argocd app wait ${{values.app_name}} --timeout 180
 
   cd-charts-only:
-    needs: [detect-changes, ci]
+    needs: [detect-changes]
     if: needs.detect-changes.outputs.only_charts == 'true'
     runs-on: self-hosted
     steps:
