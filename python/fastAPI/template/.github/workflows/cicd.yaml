@@ -15,10 +15,11 @@ jobs:
       only_charts: ${{ steps.check.outputs.only_charts }}
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # need full history for git diff
       - id: check
         run: |
-          # Get changed files
-          git fetch origin ${{ github.event.before }} --depth=1
+          # Compare before and after commits
           changed=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
 
           echo "Changed files:"
@@ -27,9 +28,9 @@ jobs:
           # Default false
           echo "only_charts=false" >> $GITHUB_OUTPUT
 
-          # Check if ALL changed files are under charts/${{values.app_name}}
-          if echo "$changed" | grep -qv '^charts/${{values.app_name}}/'; then
-            echo "Detected changes outside charts/${{values.app_name}}/"
+          # Check if ALL changed files are under charts/sample
+          if echo "$changed" | grep -qv '^charts/sample/'; then
+            echo "Detected changes outside charts/sample/"
           else
             echo "only_charts=true" >> $GITHUB_OUTPUT
           fi
@@ -100,22 +101,66 @@ jobs:
       commit_id: ${{ '${{ env.COMMIT_ID }}' }}
 
   cd:
-    needs: ci
+    needs: [detect-changes, ci]
+    if: needs.detect-changes.outputs.only_charts == 'false'
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v3
       - name: Modify values file
-        if: needs.detect-changes.outputs.only_charts == 'false'
         shell: bash
         run: |
           echo ${{ '${{ needs.ci.outputs.commit_id }}' }}  
           pip install yq
           yq -Yi '.image.tag = "${{ '${{ needs.ci.outputs.commit_id }}' }}"' charts/${{values.app_name}}/values-${{values.app_env}}.yaml
       - name: Commit changes
-        if: needs.detect-changes.outputs.only_charts == 'false'
         uses: EndBug/add-and-commit@v9
         with:
           message: 'Updates values.yaml with commit id ${{ '${{ needs.ci.outputs.commit_id }}' }}'
+      - name: Install argocd
+        shell: bash
+        run: |
+          curl -ksSl -o argocd https://argocd-server.argocd/download/argocd-linux-amd64
+          chmod +x argocd
+          sudo mv ./argocd /usr/local/bin/argocd
+      - name: Argocd app sync
+        shell: bash
+        run: |
+          # Login to argocd
+          argocd login argocd-server.argocd \
+            --insecure \
+            --grpc-web \
+            --username admin \
+            --password ${{ '${{ secrets.ARGOCD_PASSWORD }}' }}
+
+          # Add repo if not already added
+          if ! argocd repo list | grep -q 'https://github.com/jaysuzi5-organization/${{values.app_name}}'; then
+            argocd repo add 'https://github.com/jaysuzi5-organization/${{values.app_name}}.git'
+          fi
+
+          # Create the app only if it doesn't exist
+          if ! argocd app get ${{values.app_name}} >/${{values.app_env}}/null 2>&1; then
+            argocd app create ${{values.app_name}} \
+              --repo https://github.com/jaysuzi5-organization/${{values.app_name}}.git \
+              --path charts/${{values.app_name}} \
+              --dest-namespace ${{values.app_env}} \
+              --dest-server https://kubernetes.default.svc \
+              --values values-${{values.app_env}}.yaml \
+              --revision main \
+              --sync-policy manual \
+              --sync-option CreateNamespace=true
+          else
+            echo "App ${{values.app_name}} already exists."
+          fi
+
+          # Syncs the argocd app
+          argocd app sync ${{values.app_name}}
+          argocd app wait ${{values.app_name}} --timeout 180
+
+  cd-charts-only:
+    needs: [detect-changes, ci]
+    if: needs.detect-changes.outputs.only_charts == 'true'
+    runs-on: self-hosted
+    steps:
       - name: Install argocd
         shell: bash
         run: |
