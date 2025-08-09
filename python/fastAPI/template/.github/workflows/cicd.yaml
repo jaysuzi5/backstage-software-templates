@@ -9,6 +9,7 @@ on:
       - main
 
 jobs:
+
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
@@ -19,17 +20,32 @@ jobs:
           fetch-depth: 0  # need full history for git diff
       - id: check
         run: |
-          # Compare before and after commits
-          changed=$(git diff --name-only $(git merge-base HEAD origin/main) HEAD)
+          # Default false
+          only_charts=false
+
+          # Detect changed files based on event type
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            if [ "$(git rev-list --count HEAD)" -eq 1 ]; then
+              # Initial commit: diff against empty tree
+              changed=$(git diff --name-only $(git hash-object -t tree /dev/null) HEAD)
+            else
+              # Normal push: diff against previous commit
+              changed=$(git diff --name-only HEAD^ HEAD)
+            fi
+          elif [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            # Compare against PR base branch
+            git fetch origin "${GITHUB_BASE_REF}"
+            changed=$(git diff --name-only "origin/${GITHUB_BASE_REF}" HEAD)
+          else
+            echo "Unsupported event type: $GITHUB_EVENT_NAME"
+            exit 1
+          fi
 
           echo "Changed files:"
           echo "$changed"
 
-          # Default false
-          only_charts=false
-
           # Check if ALL changed files are under charts/${{values.app_name}}
-          if echo "$changed" | grep -qv '^charts/${{values.app_name}}/'; then
+          if [ -n "$changed" ] && echo "$changed" | grep -qv '^charts/${{values.app_name}}/'; then
             echo "Detected changes outside charts/${{values.app_name}}/"
           else
             only_charts=true
