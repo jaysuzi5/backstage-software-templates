@@ -20,20 +20,24 @@ jobs:
       - id: check
         run: |
           # Compare before and after commits
-          changed=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
+          changed=$(git diff --name-only HEAD^ HEAD)
 
           echo "Changed files:"
           echo "$changed"
 
           # Default false
-          echo "only_charts=false" >> $GITHUB_OUTPUT
+          only_charts=false
 
           # Check if ALL changed files are under charts/${{values.app_name}}
           if echo "$changed" | grep -qv '^charts/${{values.app_name}}/'; then
             echo "Detected changes outside charts/${{values.app_name}}/"
           else
-            echo "only_charts=true" >> $GITHUB_OUTPUT
+            only_charts=true
           fi
+
+          # Write output for later jobs
+          echo "only_charts=$only_charts" >> $GITHUB_OUTPUT
+          echo "Only charts changed? $only_charts"
 
   ci:
     needs: detect-changes
