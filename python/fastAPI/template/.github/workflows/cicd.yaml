@@ -12,7 +12,7 @@ jobs:
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
-      only_charts: ${{ steps.check.outputs.only_charts }}
+      only_charts: ${{ '${{ steps.check.outputs.only_charts }}' }}
     steps:
       - uses: actions/checkout@v3
         with:
