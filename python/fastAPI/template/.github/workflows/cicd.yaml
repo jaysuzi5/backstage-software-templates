@@ -4,11 +4,39 @@ on:
   push:
     paths:
       - src/**
+      - charts/${{values.app_name}}/**
     branches:
       - main
 
 jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      only_charts: ${{ steps.check.outputs.only_charts }}
+    steps:
+      - uses: actions/checkout@v3
+      - id: check
+        run: |
+          # Get changed files
+          git fetch origin ${{ github.event.before }} --depth=1
+          changed=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
+
+          echo "Changed files:"
+          echo "$changed"
+
+          # Default false
+          echo "only_charts=false" >> $GITHUB_OUTPUT
+
+          # Check if ALL changed files are under charts/${{values.app_name}}
+          if echo "$changed" | grep -qv '^charts/${{values.app_name}}/'; then
+            echo "Detected changes outside charts/${{values.app_name}}/"
+          else
+            echo "only_charts=true" >> $GITHUB_OUTPUT
+          fi
+
   ci:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.only_charts == 'false'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source code
@@ -70,18 +98,21 @@ jobs:
           tags: jaysuzi5/${{values.app_name}}:${{ '${{ env.COMMIT_ID }}' }}
     outputs:
       commit_id: ${{ '${{ env.COMMIT_ID }}' }}
+
   cd:
     needs: ci
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v3
       - name: Modify values file
+        if: needs.detect-changes.outputs.only_charts == 'false'
         shell: bash
         run: |
           echo ${{ '${{ needs.ci.outputs.commit_id }}' }}  
           pip install yq
           yq -Yi '.image.tag = "${{ '${{ needs.ci.outputs.commit_id }}' }}"' charts/${{values.app_name}}/values-${{values.app_env}}.yaml
       - name: Commit changes
+        if: needs.detect-changes.outputs.only_charts == 'false'
         uses: EndBug/add-and-commit@v9
         with:
           message: 'Updates values.yaml with commit id ${{ '${{ needs.ci.outputs.commit_id }}' }}'
