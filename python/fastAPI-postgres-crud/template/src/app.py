@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 
 import framework.db
 from models.${{values.app_name}} import Base
-from api import health, info, sample
+from api import health, info, ${{values.app_name}}
 
 # Setup logging before anything else uses it
 logger = logging.getLogger(__name__)
@@ -62,4 +62,4 @@ if os.getenv("TESTING") != "true":
 # Register routes
 app.include_router(health.router, tags=["Health"])
 app.include_router(info.router, tags=["Info"])
-app.include_router(sample.router, tags=["Sample"])
+app.include_router(${{values.app_name}}.router, tags=["${{values.app_name}}"])

@@ -4,7 +4,7 @@ from datetime import datetime, UTC
 from pydantic import BaseModel
 
 class ${{values.app_name}}(Base):
-    __tablename__ = "users"
+    __tablename__ = "${{values.app_name}}"
 
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(50), unique=True, nullable=False, index=True)
@@ -18,7 +18,7 @@ class ${{values.app_name}}(Base):
     )
 
     def __repr__(self):
-        return f"<User(id={self.id}, username='{self.username}', email='{self.email}')>"
+        return f"<${{values.app_name}}(id={self.id}, username='{self.username}', email='{self.email}')>"
 
 
 class ${{values.app_name}}Create(BaseModel):
