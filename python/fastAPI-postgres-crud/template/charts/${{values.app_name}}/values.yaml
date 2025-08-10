@@ -25,13 +25,13 @@ ingress:
   hosts:
     - host: home.${{values.app_env}}.com
       paths:
-        - path: /api/${{values.app_name}}/
+        - path: /api/*/${{values.app_name}}/
           pathType: Prefix
   tls: []
 resources: {}
 livenessProbe:
   httpGet:
-    path: /api/${{values.app_name}}/v1/health
+    path: /api/*/${{values.app_name}}/v1/health
     port: 5001
   initialDelaySeconds: 30
   periodSeconds: 60
@@ -39,7 +39,7 @@ livenessProbe:
   failureThreshold: 3
 readinessProbe:
   httpGet:
-    path: /api/${{values.app_name}}/v1/health
+    path: /api/*/${{values.app_name}}/v1/health
     port: 5001
   initialDelaySeconds: 5
   periodSeconds: 30

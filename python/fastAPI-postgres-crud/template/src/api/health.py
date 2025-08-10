@@ -2,7 +2,7 @@ from fastapi import APIRouter
 
 router = APIRouter()
 
-@router.get("/api/${{values.app_name}}/v1/health")
+@router.get("/api/v1/${{values.app_name}}/health")
 def health():
     """
     Health check endpoint.

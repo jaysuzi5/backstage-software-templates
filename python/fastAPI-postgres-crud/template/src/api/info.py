@@ -4,7 +4,7 @@ from fastapi import APIRouter
 
 router = APIRouter()
 
-@router.get("/api/${{values.app_name}}/v1/info")
+@router.get("/api/v1/${{values.app_name}}/info")
 def info():
     """
     Application information endpoint.
