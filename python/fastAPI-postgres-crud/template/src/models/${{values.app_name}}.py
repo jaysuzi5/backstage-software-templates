@@ -3,7 +3,7 @@ from framework.db import Base
 from datetime import datetime, UTC
 from pydantic import BaseModel
 
-class ${{values.app_name_capitalized}}(Base):
+class ${{values.app_name}}(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -21,6 +21,6 @@ class ${{values.app_name_capitalized}}(Base):
         return f"<User(id={self.id}, username='{self.username}', email='{self.email}')>"
 
 
-class ${{values.app_name_capitalized}}Create(BaseModel):
+class ${{values.app_name}}Create(BaseModel):
     username: str
     email: str
