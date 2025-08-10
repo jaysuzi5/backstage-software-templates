@@ -25,7 +25,7 @@ ingress:
   hosts:
     - host: home.${{values.app_env}}.com
       paths:
-        - path: /api/v1/${{values.app_name}}/
+        - path: /api/v1/${{values.app_name}}
           pathType: Prefix
   tls: []
 resources: {}
