@@ -3,7 +3,7 @@
 ### ${{values.app_description}}
 This application has two generic endpoints:
 
-| Method | URL Pattern           | Action             |
+| Method | URL Pattern           | Description             |
 |--------|-----------------------|--------------------|
 | GET    | /api/v1/${{values.app_name}}/info         | Basic description of the application and container     |
 | GET    | /api/v1/${{values.app_name}}/health    | Health check endpoint     |
@@ -11,7 +11,7 @@ This application has two generic endpoints:
 
 
 ## CRUD Endpoints:
-| Method | URL Pattern           | Action             | Example             |
+| Method | URL Pattern           | Description             | Example             |
 |--------|-----------------------|--------------------|---------------------|
 | GET    | /api/v1/${{values.app_name}}         | List all ${{values.app_name}}     | /api/v1/${{values.app_name}}       |
 | GET    | /api/v1/${{values.app_name}}/{id}    | Get ${{values.app_name}} by ID     | /api/v1/${{values.app_name}}/42    |
