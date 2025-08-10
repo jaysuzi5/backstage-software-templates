@@ -21,13 +21,12 @@ service:
 ingress:
   enabled: true
   className: "nginx"
-  annotations:
-    nginx.ingress.kubernetes.io/use-regex: "true"
+  annotations: {}
   hosts:
     - host: home.${{values.app_env}}.com
       paths:
-        - path: ~^/api/v[0-9]+/${{values.app_name}}/
-          pathType: ImplementationSpecific
+        - path: /api/v1/${{values.app_name}}/
+          pathType: Prefix
   tls: []
 resources: {}
 livenessProbe:
