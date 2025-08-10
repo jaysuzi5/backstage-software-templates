@@ -1,7 +1,7 @@
 from sqlalchemy import Column, DateTime, Integer, String
 from framework.db import Base
 from datetime import datetime, UTC
-
+from pydantic import BaseModel
 
 class User(Base):
     __tablename__ = "users"
@@ -19,3 +19,9 @@ class User(Base):
 
     def __repr__(self):
         return f"<User(id={self.id}, username='{self.username}', email='{self.email}')>"
+
+
+
+class UserCreate(BaseModel):
+    username: str
+    email: str
