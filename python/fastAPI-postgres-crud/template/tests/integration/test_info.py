@@ -16,7 +16,7 @@ def client():
 @pytest.mark.integration
 def test_info_endpoint(client):
     """Test the /info endpoint returns expected keys and values."""
-    response = client.get("/api/${{values.app_name}}/v1/info")
+    response = client.get("/api/v1/${{values.app_name}}/info")
     assert response.status_code == 200
     json_data = response.json()
 

@@ -16,7 +16,7 @@ def client():
 @pytest.mark.integration
 def test_health_endpoint(client):
     """Test the /health endpoint returns status UP."""
-    response = client.get("/api/${{values.app_name}}/v1/health")
+    response = client.get("/api/v1/${{values.app_name}}/health")
     assert response.status_code == 200
     assert response.json() == {"status": "UP"}
 

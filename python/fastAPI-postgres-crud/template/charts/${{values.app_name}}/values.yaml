@@ -31,7 +31,7 @@ ingress:
 resources: {}
 livenessProbe:
   httpGet:
-    path: /api/*/${{values.app_name}}/v1/health
+    path: /api/*/${{values.app_name}}/health
     port: 5001
   initialDelaySeconds: 30
   periodSeconds: 60
@@ -39,7 +39,7 @@ livenessProbe:
   failureThreshold: 3
 readinessProbe:
   httpGet:
-    path: /api/*/${{values.app_name}}/v1/health
+    path: /api/*/${{values.app_name}}/health
     port: 5001
   initialDelaySeconds: 5
   periodSeconds: 30
