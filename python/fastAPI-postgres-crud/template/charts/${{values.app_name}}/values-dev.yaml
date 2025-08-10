@@ -1,0 +1,5 @@
+replicaCount: ${{values.app_containers}}
+resources:
+  requests:
+    cpu: 40m
+    memory: 40M

@@ -1,0 +1,11 @@
+apiVersion: backstage.io/v1alpha1
+kind: Location
+metadata:
+  name: backstage-software-templates
+  description: All software templates in the repo
+spec:
+  targets:
+    - ./python/flask/template.yaml
+    - ./python/fastAPI/template.yaml
+    - ./python/fastAPI-postgres-crud/template.yaml
+    # Add more templates here if you create new ones
