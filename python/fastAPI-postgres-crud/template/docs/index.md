@@ -1,14 +1,16 @@
 # Documentation for ${{values.app_name}}
+## This is a fastAPI application
 ### ${{values.app_description}}
 This application has two generic endpoints:
-Describe the application and container:
-    - /v1/${{values.app_name}}/info
-Healthcheck for the application:
-    - /v1/${{values.app_name}}/health
+
+| Method | URL Pattern           | Action             |
+|--------|-----------------------|--------------------|
+| GET    | /api/v1/${{values.app_name}}/info         | Basic description of the application and container     |
+| GET    | /api/v1/${{values.app_name}}/health    | Health check endpoint     |
 
 
-### CRUD Endpoints:
-## 2. CRUD Endpoints (Versioned)
+
+## CRUD Endpoints:
 | Method | URL Pattern           | Action             | Example             |
 |--------|-----------------------|--------------------|---------------------|
 | GET    | /api/v1/${{values.app_name}}         | List all ${{values.app_name}}     | /api/v1/${{values.app_name}}       |
@@ -19,5 +21,5 @@ Healthcheck for the application:
 | DELETE | /api/v1/${{values.app_name}}/{id}    | Delete ${{values.app_name}}        | /api/v1/${{values.app_name}}/42    |
 
 
-# How to access the app?
+## How to access the app?
 You can access the app by accessing the URL: http://home.${{values.app_env}}.com/api/v1/${{values.app_name}}/info
