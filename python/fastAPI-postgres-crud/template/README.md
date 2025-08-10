@@ -1,6 +1,6 @@
 # Documentation for ${{values.app_name}}
-## This is a fastAPI application
-### ${{values.app_description}}
+### fastAPI: ${{values.app_description}}
+
 This application has two generic endpoints:
 
 | Method | URL Pattern           | Description             |
