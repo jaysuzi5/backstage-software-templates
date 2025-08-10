@@ -52,6 +52,7 @@ spec:
         url: ./template
         values:
           app_name: ${{parameters.component_id}}
+          app_name_capitalized: ${{ parameters.component_id | capitalize }}
           app_description: ${{parameters.description}}
           app_env: ${{parameters.environment}}          
           app_containers: ${{parameters.num_containers}}

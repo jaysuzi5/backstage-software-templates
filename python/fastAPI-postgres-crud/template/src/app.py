@@ -6,7 +6,7 @@ from sqlalchemy import text
 from contextlib import asynccontextmanager
 
 import framework.db
-from models import Base
+from models.${{values.app_name}} import Base
 from api import health, info, sample
 
 # Setup logging before anything else uses it
