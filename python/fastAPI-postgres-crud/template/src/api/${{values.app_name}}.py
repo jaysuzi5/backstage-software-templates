@@ -23,8 +23,8 @@ def list_${{values.app_name}}(
 ):
     try:
         offset = (page - 1) * limit
-        ${{values.app_name}} = db.query(${{values.app_name}}).offset(offset).limit(limit).all()
-        return [serialize_sqlalchemy_obj(item) for item in ${{values.app_name}}]
+        ${{values.app_name}}_records = db.query(${{values.app_name}}).offset(offset).limit(limit).all()
+        return [serialize_sqlalchemy_obj(item) for item in ${{values.app_name}}_records]
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
