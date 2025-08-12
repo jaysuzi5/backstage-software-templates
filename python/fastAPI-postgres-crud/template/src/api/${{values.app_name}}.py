@@ -30,7 +30,6 @@ def list_${{values.app_name}}(
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
-
 @router.post("/api/v1/${{values.app_name}}")
 def create_record(
     ${{values.app_name}}_data: ${{values.app_name}}Create = Body(...),
@@ -54,6 +53,90 @@ def create_record(
         db.refresh(new_record)
 
         return serialize_sqlalchemy_obj(new_record)
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@router.get("/api/v1/${{values.app_name}}/{id}")
+def get_${{values.app_name}}_by_id(id: int, db: Session = Depends(get_db)):
+    try:
+        record = db.query(${{values.app_name}}).filter(${{values.app_name}}.id == id).first()
+        if not record:
+            raise HTTPException(status_code=404, detail=f"${{values.app_name}} with id {id} not found")
+        return serialize_sqlalchemy_obj(record)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@router.put("/api/v1/${{values.app_name}}/{id}")
+def update_${{values.app_name}}_full(
+    id: int,
+    ${{values.app_name}}_data: ${{values.app_name}}Create = Body(...),
+    db: Session = Depends(get_db)
+):
+    try:
+        record = db.query(${{values.app_name}}).filter(${{values.app_name}}.id == id).first()
+        if not record:
+            raise HTTPException(status_code=404, detail=f"${{values.app_name}} with id {id} not found")
+
+        data = ${{values.app_name}}_data.model_dump(exclude_unset=False)  # require all fields for PUT
+        for key, value in data.items():
+            setattr(record, key, value)
+
+        record.update_date = datetime.now(UTC)
+
+        db.commit()
+        db.refresh(record)
+        return serialize_sqlalchemy_obj(record)
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@router.patch("/api/v1/${{values.app_name}}/{id}")
+def update_${{values.app_name}}_partial(
+    id: int,
+    ${{values.app_name}}_data: ${{values.app_name}}Create = Body(...),
+    db: Session = Depends(get_db)
+):
+    try:
+        record = db.query(${{values.app_name}}).filter(${{values.app_name}}.id == id).first()
+        if not record:
+            raise HTTPException(status_code=404, detail=f"${{values.app_name}} with id {id} not found")
+
+        data = ${{values.app_name}}_data.model_dump(exclude_unset=True)  # only provided fields for PATCH
+        for key, value in data.items():
+            setattr(record, key, value)
+
+        record.update_date = datetime.now(UTC)
+
+        db.commit()
+        db.refresh(record)
+        return serialize_sqlalchemy_obj(record)
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@router.delete("/api/v1/${{values.app_name}}/{id}")
+def delete_${{values.app_name}}(id: int, db: Session = Depends(get_db)):
+    try:
+        record = db.query(${{values.app_name}}).filter(${{values.app_name}}.id == id).first()
+        if not record:
+            raise HTTPException(status_code=404, detail=f"${{values.app_name}} with id {id} not found")
+
+        db.delete(record)
+        db.commit()
+        return {"detail": f"${{values.app_name}} with id {id} deleted successfully"}
     except HTTPException:
         raise
     except Exception as e:

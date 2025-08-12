@@ -1,6 +1,12 @@
 # Documentation for ${{values.app_name}}
 ### fastAPI: ${{values.app_description}}
 
+#### Swagger:
+http://home.dev.com/api/v1/${{values.app_name}}/docs
+
+Test: ${{values.app_name_capitalized}} (should be capitalized)
+
+
 This application has two generic endpoints:
 
 | Method | URL Pattern           | Description             |

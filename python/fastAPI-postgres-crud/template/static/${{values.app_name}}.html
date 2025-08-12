@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>${{values.app_name}} Test Page</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <h1>${{values.app_name}} Management</h1>
+
+  <h2>Add ${{values.app_name}}</h2>
+  <form id="${{values.app_name}}Form" autocomplete="off">
+    <label>
+      User Name:
+      <input type="text" id="username" required>
+    </label>
+    <label>
+      Full Name:
+      <input type="text" id="full_name" required>
+    </label>
+    <label>
+      Email:
+      <input type="email" id="email" required>
+    </label>
+    <button type="submit">Add</button>
+  </form>
+  <div id="responseMessage"></div>
+
+  <h2>${{values.app_name}} List</h2>
+
+  <div id="paginationControls" aria-label="Pagination controls">
+    <button id="prevPage" disabled>Previous</button>
+    <span>Page <span id="currentPage">1</span></span>
+    <button id="nextPage">Next</button>
+    <label for="pageSizeSelect" style="margin-left: auto; font-weight:600; font-size:0.9rem; color: var(--blue-dark);">
+      Items per page:
+    </label>
+    <select id="pageSizeSelect" aria-label="Select number of items per page">
+      <option value="5">5</option>
+      <option value="10" selected>10</option>
+      <option value="20">20</option>
+      <option value="50">50</option>
+    </select>
+  </div>
+
+  <table id="${{values.app_name}}Table" aria-label="${{values.app_name}} list table">
+    <thead>
+      <tr><th>ID</th><th>${{values.app_name}} Name</th><th>Email</th><th>Full Name</th><th>Create Date</th><th>Update Date</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const apiBase = '/api/v1/${{values.app_name}}';
+    const responseMessage = document.getElementById('responseMessage');
+    const tbody = document.querySelector('#${{values.app_name}}Table tbody');
+    const currentPageSpan = document.getElementById('currentPage');
+    const prevPageBtn = document.getElementById('prevPage');
+    const nextPageBtn = document.getElementById('nextPage');
+    const pageSizeSelect = document.getElementById('pageSizeSelect');
+
+    let currentPage = 1;
+
+    // Always read pageSize dynamically before load_${{values.app_name}}
+    function getPageSize() {
+      return Number(pageSizeSelect.value);
+    }
+
+    async function load_${{values.app_name}}(page = 1) {
+      responseMessage.textContent = '';
+      responseMessage.className = '';
+
+      const pageSize = getPageSize();
+
+      try {
+        const res = await fetch(`${apiBase}?page=${page}&limit=${pageSize}`);
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        const data = await res.json();
+
+        tbody.innerHTML = '';
+
+        if (data.length === 0 && page > 1) {
+          // No data on requested page - go back one page and reload
+          currentPage = page - 1;
+          updatePaginationButtons();
+          load_${{values.app_name}}(currentPage);
+          return;
+        }
+
+        data.forEach(${{values.app_name}} => {
+          tbody.innerHTML += `
+            <tr>
+              <td>${${{values.app_name}}.id}</td>
+              <td>${${{values.app_name}}.username}</td>
+              <td>${${{values.app_name}}.email}</td>
+              <td>${${{values.app_name}}.full_name ?? ''}</td>
+              <td>${${{values.app_name}}.create_date ? new Date(${{values.app_name}}.create_date).toLocaleString() : ''}</td>
+              <td>${${{values.app_name}}.update_date ? new Date(${{values.app_name}}.update_date).toLocaleString() : ''}</td>
+            </tr>
+          `;
+        });
+
+        currentPage = page;
+        currentPageSpan.textContent = currentPage;
+        updatePaginationButtons();
+
+      } catch (err) {
+        responseMessage.textContent = 'Failed to load ${{values.app_name}}: ' + err.message;
+        responseMessage.classList.add('error');
+      }
+    }
+
+    function updatePaginationButtons() {
+      prevPageBtn.disabled = currentPage <= 1;
+      // Next button is always enabled as before
+    }
+
+    // Prev button handler
+    prevPageBtn.addEventListener('click', () => {
+      if (currentPage > 1) {
+        load_${{values.app_name}}(currentPage - 1);
+      }
+    });
+
+    // Next button handler
+    nextPageBtn.addEventListener('click', () => {
+      load_${{values.app_name}}(currentPage + 1);
+    });
+
+    pageSizeSelect.addEventListener('change', () => {
+      currentPage = 1;  // reset to first page on page size change
+      load_${{values.app_name}}(currentPage);
+    });
+
+    document.getElementById('${{values.app_name}}Form').addEventListener('submit', e => {
+      e.preventDefault();
+      responseMessage.textContent = '';
+      responseMessage.className = '';
+
+      const username = document.getElementById('username').value.trim();
+      const full_name = document.getElementById('full_name').value.trim();
+      const email = document.getElementById('email').value.trim();
+
+      fetch(apiBase, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, full_name, email })
+      })
+      .then(async res => {
+        const contentType = res.headers.get('content-type') || '';
+        let data;
+        if (contentType.includes('application/json')) {
+          data = await res.json();
+        } else {
+          data = await res.text();
+        }
+
+        if (res.status >= 400) {
+          responseMessage.textContent = `Error ${res.status}: ` + (typeof data === 'string' ? data : JSON.stringify(data));
+          responseMessage.classList.add('error');
+        } else {
+          responseMessage.textContent = `Success ${res.status}: ${{values.app_name}} added.`;
+          responseMessage.classList.add('success');
+          document.getElementById('${{values.app_name}}Form').reset();
+          load_${{values.app_name}}(currentPage);
+        }
+      })
+      .catch(err => {
+        responseMessage.textContent = 'Network or server error: ' + err.message;
+        responseMessage.classList.add('error');
+      });
+    });
+
+    // Initial load
+    load_${{values.app_name}}(currentPage);
+  </script>
+</body>
+</html>

@@ -50,7 +50,13 @@ async def lifespan(app: FastAPI):
     yield
 
 # Create FastAPI app
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    title="Users API",
+    version="1.0.0",
+    openapi_url="/api/v1/${{values.app_name}}/openapi.json",
+    docs_url="/api/v1/${{values.app_name}}/docs",
+    lifespan=lifespan
+)
 
 # Add middleware and instrumentation
 if os.getenv("TESTING") != "true":

@@ -2,6 +2,7 @@ from sqlalchemy import Column, DateTime, Integer, String
 from framework.db import Base
 from datetime import datetime, UTC
 from pydantic import BaseModel
+from typing import Optional
 
 class ${{values.app_name}}(Base):
     __tablename__ = "${{values.app_name}}"
@@ -24,3 +25,4 @@ class ${{values.app_name}}(Base):
 class ${{values.app_name}}Create(BaseModel):
     username: str
     email: str
+    full_name: Optional[str] = None
