@@ -4,7 +4,7 @@ from time import sleep
 from fastapi import FastAPI
 from sqlalchemy import text
 from contextlib import asynccontextmanager
-
+from fastapi.staticfiles import StaticFiles
 import framework.db
 from models.${{values.app_name}} import Base
 from api import health, info, ${{values.app_name}}
@@ -69,3 +69,4 @@ if os.getenv("TESTING") != "true":
 app.include_router(health.router, tags=["Health"])
 app.include_router(info.router, tags=["Info"])
 app.include_router(${{values.app_name}}.router, tags=["${{values.app_name}}"])
+app.mount("/${{values.app_name}}/test", StaticFiles(directory="static", html=True), name="test")

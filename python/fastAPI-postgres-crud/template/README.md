@@ -1,8 +1,6 @@
 # Documentation for ${{values.app_name}}
 ### fastAPI: ${{values.app_description}}
 
-#### Swagger:
-http://home.dev.com/api/v1/${{values.app_name}}/docs
 
 Test: ${{values.app_name_capitalized}} (should be capitalized)
 
@@ -27,5 +25,11 @@ This application has two generic endpoints:
 | DELETE | /api/v1/${{values.app_name}}/{id}    | Delete ${{values.app_name}}        | /api/v1/${{values.app_name}}/42    |
 
 
-## How to access the app?
+### How to access the app?
 You can access the app by accessing the URL: http://home.${{values.app_env}}.com/api/v1/${{values.app_name}}/info
+
+### View test page
+You can view the test page by accessing the URL: http://home.${{values.app_env}}.com/${{values.app_name}}/test/${{values.app_name}}.html
+
+### Swagger:
+http://home.dev.com/api/v1/${{values.app_name}}/docs

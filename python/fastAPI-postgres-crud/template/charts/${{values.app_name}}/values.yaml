@@ -27,6 +27,8 @@ ingress:
       paths:
         - path: /api/v1/${{values.app_name}}
           pathType: Prefix
+        - path: /${{values.app_name}}/test
+          pathType: Prefix          
   tls: []
 resources: {}
 livenessProbe:
