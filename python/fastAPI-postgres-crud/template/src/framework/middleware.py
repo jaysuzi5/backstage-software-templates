@@ -33,7 +33,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
           /api/v1/users/openapi.json → version = v1, service = users, endpoint = users/openapi.json
     - Log structured details for both the request and response.
     - Optionally parse JSON request/response bodies.
-    - Append the `transactionId` header to the HTTP response for correlation.
+    - Append the `transaction_id` header to the HTTP response for correlation.
 
     Logging fields include:
         - level: log severity (INFO/ERROR)
@@ -71,7 +71,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         }
 
     Example response header:
-        transactionId: f1a2c3d4-5678-90ab-cdef-1234567890ab
+        transaction_id: f1a2c3d4-5678-90ab-cdef-1234567890ab
 
     Notes:
         - Numeric path segments are replaced with `{id}` to avoid logging sensitive or unique IDs.
@@ -150,8 +150,8 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             })
             raise e
 
-        # Add transactionId to response header
-        response.headers["transactionId"] = transaction_id
+        # Add transaction_id to response header
+        response.headers["transaction_id"] = transaction_id
 
         # Process response body
         response_body = b''
