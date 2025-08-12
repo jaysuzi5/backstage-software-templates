@@ -87,13 +87,11 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         method = request.method
 
         version = None
-        service = None
         endpoint = None
 
         parts = path.strip("/").split("/")
         if len(parts) >= 3 and parts[0] == "api":
             version = parts[1]
-            service = parts[2]
 
             endpoint_parts = []
             for part in parts[2:]:
@@ -121,7 +119,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             "event": "Request",
             "method": method,
             "version": version,
-            "service": service,
+            "service": ${{values.app_name}},
             "endpoint": endpoint,
             "path": path,
             "remote_addr": request.client.host,
@@ -141,7 +139,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
                 "event": "Unhandled Exception",
                 "method": method,
                 "version": version,
-                "service": service,
+                "service": ${{values.app_name}},
                 "endpoint": endpoint,
                 "path": path,
                 "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
