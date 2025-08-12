@@ -4,6 +4,7 @@ import time
 import uuid
 import datetime
 import traceback
+import re
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi import Request
 from opentelemetry.sdk._logs import LoggingHandler
@@ -14,32 +15,104 @@ import json
 middleware_logger = logging.getLogger("middleware")
 middleware_logger.setLevel(logging.INFO)
 
-# Only add a handler if none exists (prevents duplication in test runners)
 if not middleware_logger.handlers:
     middleware_logger.addHandler(LoggingHandler())
 
 
 class LoggingMiddleware(BaseHTTPMiddleware):
+    """
+    Middleware for request/response logging, endpoint normalization, and transaction tracking.
+
+    This middleware intercepts all incoming HTTP requests and outgoing HTTP responses to:
+    - Assign a unique transaction ID for each request.
+    - Parse and normalize the `version`, `service`, and `endpoint` from API paths.
+      * Supports replacing numeric path segments with `{id}` placeholders.
+      * Example:
+          /api/v1/users/19           → version = v1, service = users, endpoint = users/{id}
+          /api/v1/users/info         → version = v1, service = users, endpoint = users/info
+          /api/v1/users/openapi.json → version = v1, service = users, endpoint = users/openapi.json
+    - Log structured details for both the request and response.
+    - Optionally parse JSON request/response bodies.
+    - Append the `transactionId` header to the HTTP response for correlation.
+
+    Logging fields include:
+        - level: log severity (INFO/ERROR)
+        - event: "Request" or "Response"
+        - method: HTTP method (GET, POST, etc.)
+        - version: extracted API version (e.g., "v1")
+        - service: service derived from the path
+        - endpoint: normalized endpoint string
+        - path: original request path
+        - remote_addr: client IP address
+        - hostname: server hostname handling the request
+        - transaction_id: UUID assigned to this transaction
+        - request_body: parsed JSON or raw string for applicable HTTP methods
+        - query_params: dictionary of query parameters
+        - duration_seconds: request processing time (response only)
+        - status: HTTP status code (response only)
+        - response_body: parsed JSON or raw string (response only)
+        - exception: exception string (error cases)
+        - stack_trace: traceback string (error cases)
+
+    Example log for a GET request:
+        {
+            "level": "INFO",
+            "event": "Request",
+            "method": "GET",
+            "version": "v1",
+            "service": "users",
+            "endpoint": "users/{id}",
+            "path": "/api/v1/users/42",
+            "remote_addr": "192.168.1.10",
+            "timestamp": "2025-08-12T22:18:30.123Z",
+            "hostname": "my-server",
+            "transaction_id": "f1a2c3d4-5678-90ab-cdef-1234567890ab",
+            "query_params": {}
+        }
+
+    Example response header:
+        transactionId: f1a2c3d4-5678-90ab-cdef-1234567890ab
+
+    Notes:
+        - Numeric path segments are replaced with `{id}` to avoid logging sensitive or unique IDs.
+        - This middleware does not modify the request path or method.
+        - Works with both regular and streaming responses.
+    """
+
     async def dispatch(self, request: Request, call_next):
         transaction_id = str(uuid.uuid4())
         start_time = time.time()
 
         path = request.url.path
         method = request.method
-        parts = path.strip('/').split('/')
-        endpoint = parts[-1]
-        app_name = parts[2] if len(parts) >= 4 and parts[0] == 'api' and parts[1] == 'v1' else None
 
-        # Read request body
+        version = None
+        service = None
+        endpoint = None
+
+        parts = path.strip("/").split("/")
+        if len(parts) >= 3 and parts[0] == "api":
+            version = parts[1]
+            service = parts[2]
+
+            endpoint_parts = []
+            for part in parts[2:]:
+                if re.fullmatch(r"\d+", part):  # replace numeric IDs
+                    endpoint_parts.append("{id}")
+                else:
+                    endpoint_parts.append(part)
+            endpoint = "/".join(endpoint_parts)
+
+        # Read request body if needed
         request_body = None
         if method in ("POST", "PUT", "PATCH"):
             try:
-                request_body = await request.body()
-                if request_body:
+                body_bytes = await request.body()
+                if body_bytes:
                     try:
-                        request_body = json.loads(request_body.decode('utf-8'))
+                        request_body = json.loads(body_bytes.decode("utf-8"))
                     except json.JSONDecodeError:
-                        request_body = request_body.decode('utf-8')
+                        request_body = body_bytes.decode("utf-8")
             except Exception:
                 request_body = None
 
@@ -47,7 +120,8 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             "level": "INFO",
             "event": "Request",
             "method": method,
-            "service": app_name,
+            "version": version,
+            "service": service,
             "endpoint": endpoint,
             "path": path,
             "remote_addr": request.client.host,
@@ -66,7 +140,8 @@ class LoggingMiddleware(BaseHTTPMiddleware):
                 "level": "ERROR",
                 "event": "Unhandled Exception",
                 "method": method,
-                "service": app_name,
+                "version": version,
+                "service": service,
                 "endpoint": endpoint,
                 "path": path,
                 "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
@@ -77,13 +152,15 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             })
             raise e
 
+        # Add transactionId to response header
+        response.headers["transactionId"] = transaction_id
+
         # Process response body
         response_body = b''
         if isinstance(response, StreamingResponse):
             async for chunk in response.body_iterator:
                 response_body += chunk
 
-            # Rebuild the streaming response
             async def new_body_iterator():
                 yield response_body
 
@@ -96,7 +173,6 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         else:
             response_body = response.body
 
-        # Parse response body if possible
         parsed_response_body = None
         if response_body:
             try:
@@ -112,6 +188,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             "level": "INFO",
             "event": "Response",
             "method": method,
+            "version": version,
             "path": path,
             "endpoint": endpoint,
             "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),

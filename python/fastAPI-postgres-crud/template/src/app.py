@@ -1,3 +1,19 @@
+"""
+app.py
+
+Entry point for the FastAPI application.  
+Configures logging, middleware, database connections, routes, and OpenTelemetry instrumentation.
+
+This application follows a modular architecture:
+- API endpoints are defined in `api/` modules.
+- Database models are located in `models/`.
+- Middleware and instrumentation logic is in `framework/`.
+
+Environment Variables:
+    TESTING (str): If set to `"true"`, disables middleware and OpenTelemetry, and uses basic logging.
+
+"""
+
 import os
 import logging
 from time import sleep
@@ -11,12 +27,14 @@ from api import health, info, ${{values.app_name}}
 
 # Setup logging before anything else uses it
 logger = logging.getLogger(__name__)
+
 if os.getenv("TESTING") != "true":
     from framework.middleware import LoggingMiddleware
     from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
     app_middleware = [LoggingMiddleware]
     otel_enabled = True
-else:  # Basic logging when running tests
+else:
+    # Basic logging when running tests (no OTEL or custom middleware)
     handler = logging.StreamHandler()
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
     handler.setFormatter(formatter)
@@ -24,8 +42,27 @@ else:  # Basic logging when running tests
     app_middleware = []
     otel_enabled = False
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """
+    Application lifespan context manager.
+
+    Handles startup and shutdown events for the FastAPI application.
+    On startup:
+        - Attempts to establish a database connection.
+        - Retries connection up to `max_retries` times with `retry_delay` seconds between attempts.
+        - Initializes database tables if they do not exist.
+
+    Args:
+        app (FastAPI): The FastAPI application instance.
+
+    Raises:
+        Exception: If database connection fails after the maximum number of retries.
+
+    Yields:
+        None: Control is returned to the application after startup logic completes.
+    """
     max_retries = 5
     retry_delay = 2
 
@@ -37,7 +74,6 @@ async def lifespan(app: FastAPI):
                 Base.metadata.create_all(bind=framework.db.engine)
                 with framework.db.SessionLocal() as session:
                     session.execute(text("SELECT 1"))
-
                 logger.info("Database connection established successfully")
                 break
             except Exception as e:
@@ -49,7 +85,7 @@ async def lifespan(app: FastAPI):
 
     yield
 
-# Create FastAPI app
+
 app = FastAPI(
     title="Users API",
     version="1.0.0",
