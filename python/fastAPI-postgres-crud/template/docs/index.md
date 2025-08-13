@@ -2,9 +2,6 @@
 ### fastAPI: ${{values.app_description}}
 
 
-Test: ${{values.app_name_capitalized}} (should be capitalized)
-
-
 This application has two generic endpoints:
 
 | Method | URL Pattern           | Description             |
