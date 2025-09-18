@@ -120,6 +120,8 @@ def init_db(database_url: str = None, **engine_kwargs):
             autoflush=False,
             bind=engine
         )
+        import models.{{values.app_name}}
+        Base.metadata.create_all(engine)
         logger.info("Database initialized successfully")
 
     except Exception as e:

@@ -1,9 +1,9 @@
 """
-${{values.app_name}} Model and Pydantic Schema
+${{values.app_name_capitalized}} Model and Pydantic Schema
 
 This module defines:
-- The SQLAlchemy ORM model for persisting ${{values.app_name}} data.
-- The Pydantic schema for validating API requests when creating a ${{values.app_name}}.
+- The SQLAlchemy ORM model for persisting ${{values.app_name_capitalized}} data.
+- The Pydantic schema for validating API requests when creating a ${{values.app_name_capitalized}}.
 
 """
 
@@ -14,9 +14,9 @@ from pydantic import BaseModel
 from typing import Optional
 
 
-class ${{values.app_name}}(Base):
+class ${{values.app_name_capitalized}}(Base):
     """
-    SQLAlchemy ORM model representing a ${{values.app_name}} record.
+    SQLAlchemy ORM model representing a ${{values.app_name_capitalized}} record.
 
     Attributes:
         id (int): Primary key, unique identifier for the record.
@@ -46,17 +46,17 @@ class ${{values.app_name}}(Base):
 
     def __repr__(self):
         """
-        Returns a string representation of the ${{values.app_name}} instance.
+        Returns a string representation of the ${{values.app_name_capitalized}} instance.
 
         Example:
-            <${{values.app_name}}(id=1, username='johndoe', email='john@example.com')>
+            <${{values.app_name_capitalized}}(id=1, username='johndoe', email='john@example.com')>
         """
-        return f"<${{values.app_name}}(id={self.id}, username='{self.username}', email='{self.email}')>"
+        return f"<${{values.app_name_capitalized}}(id={self.id}, username='{self.username}', email='{self.email}')>"
 
 
-class ${{values.app_name}}Create(BaseModel):
+class ${{values.app_name_capitalized}}Create(BaseModel):
     """
-    Pydantic schema for creating a new ${{values.app_name}}.
+    Pydantic schema for creating a new ${{values.app_name_capitalized}}.
 
     Attributes:
         username (str): Required username for the new user.
