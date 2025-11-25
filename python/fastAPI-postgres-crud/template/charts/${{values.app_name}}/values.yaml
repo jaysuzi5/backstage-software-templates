@@ -2,7 +2,7 @@ replicaCount: 1
 image:
   repository: jaysuzi5/${{values.app_name}}
   pullPolicy: Always
-  tag: ${{values.app_name}}-${{values.app_env}}-latest
+  tag: latest
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
