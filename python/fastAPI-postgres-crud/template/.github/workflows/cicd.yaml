@@ -117,7 +117,7 @@ jobs:
         with:
           push: true
           tags: |
-            jaysuzi5/${{ values.app_name }}:${{ env.COMMIT_ID }}
+            jaysuzi5/${{values.app_name}}:${{ '${{ env.COMMIT_ID }}' }}
             jaysuzi5/${{ values.app_name }}:latest
     outputs:
       commit_id: ${{ '${{ env.COMMIT_ID }}' }}
